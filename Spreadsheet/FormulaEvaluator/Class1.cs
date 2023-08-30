@@ -18,11 +18,60 @@ namespace FormulaEvaluator
             {
                 substrings[i] = substrings[i].Trim();
                 ValidateStr(substrings[i]);
+
+                // check if a variable has been presented.
+                // if it has then get its value and put into tokens list
+
+                // WRITE HELPER METHOD THAT CHECKS IF SUBSTRING IS A VARIABLE
+
+                /*if (!char.IsLetter(substrings[i]))
+                {
+                    substrings[i] = variableEvaluator(substrings[i]);
+                }
+                tokens[i] = substrings[i][0];*/
             }
 
             // Implement algorithm using Stacks
             
+            for(int i = 0; i < substrings.Length; i++)
+            {
+                // if Token is a NUMBER, go in
+                //x = "235"
+                // 2
+                // A2
+                // *
+               
+                if (char.IsNumber(substrings[i]))
+                {
+                    // if there is an operator in the action stack, check if its multiply or divide
+                    if(action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
+                    {
+                        // there is an operator present, see if its multiply or divide, if so, do that operation
+                        if(tempOperator == '*')
+                        {
+                            action.Pop();
+                            value.Push(value.Pop() * tokens[i]);
 
+                        }
+                        else if (tempOperator == '/')
+                        {
+                            action.Pop();
+                            value.Push(value.Pop() / tokens[i]);
+                            // add check for division by zero??
+                        }
+
+                    }
+                    else
+                    {
+                        value.Push(tokens[i]);
+                    }
+                }
+                // if token is a VARIABLE, go in
+                else if ()
+                {
+
+                }
+            }
             
 
             
