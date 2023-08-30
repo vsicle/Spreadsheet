@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34018.315
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormulaEvaluator", "FormulaEvaluator\FormulaEvaluator.csproj", "{7631E020-67B0-46B3-AF95-B0EE49499A99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FormulaEvaluator", "FormulaEvaluator\FormulaEvaluator.csproj", "{7631E020-67B0-46B3-AF95-B0EE49499A99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvaluatorTester", "EvaluatorTester\EvaluatorTester.csproj", "{32B2C8F3-FFE2-4EB6-A8EA-CC9A72FF0C27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{7631E020-67B0-46B3-AF95-B0EE49499A99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7631E020-67B0-46B3-AF95-B0EE49499A99}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7631E020-67B0-46B3-AF95-B0EE49499A99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32B2C8F3-FFE2-4EB6-A8EA-CC9A72FF0C27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32B2C8F3-FFE2-4EB6-A8EA-CC9A72FF0C27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32B2C8F3-FFE2-4EB6-A8EA-CC9A72FF0C27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32B2C8F3-FFE2-4EB6-A8EA-CC9A72FF0C27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
