@@ -7,7 +7,8 @@ namespace EvaluatorTester
         static void Main(string[] args)
         {
             
-            Console.WriteLine(Evaluator.Evaluate("4/2 + 4 - 2 * 5", null)); // incorrect answer?
+            Console.WriteLine(Evaluator.Evaluate(" 3    * 4+2 -5", null)); 
+            // incorrect order of operations?
             // parenthesis break it
         }
     }

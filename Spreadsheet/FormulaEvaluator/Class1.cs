@@ -139,7 +139,7 @@ namespace FormulaEvaluator
                 int result = value.Pop();
                 if (value.Count != 0)
                 {
-                    throw new InvalidOperationException("Something went wrong, ");
+                    throw new InvalidOperationException("Something went wrong");
                 }
                 else
                 {
@@ -148,21 +148,8 @@ namespace FormulaEvaluator
             }
 
             // If operator stack is not empty
-
             return DoOperation(value.Pop(), value.Pop(), action.Pop());
 
-            //char lastOp = action.Pop();
-            /*switch (lastOp)
-            {
-                case '+':
-                    value.Push(value.Pop() + value.Pop());
-                    return value.Pop();
-                case '-':
-                    //var v1 = value.Pop();
-                    //var v2 = value.Pop();
-                    value.Push(value.Pop() - value.Pop());
-                    return value.Pop();
-            }*/
 
             throw new Exception("Something went wrong, unacounted for case");
             
@@ -172,61 +159,17 @@ namespace FormulaEvaluator
         }
 
         /// <summary>
-        /// 
-        /// SHOULD BE GOOD, HAVE TA LOOK AT IT
+        ///
         /// 
         /// </summary>
         /// <param name="str"></param>
         /// <exception cref="ArgumentException"></exception>
         private static void ValidateStr(string str)
         {
-
-            string validOperators = "+-*/()";
-
-            if(str.Length == 1 && validOperators.Contains(str))
+            if (!Regex.IsMatch(str, @"^(?:\d+|[a-zA-Z]+\d+|[*/+\-]+)$"))
             {
-                return;
+                throw new ArgumentException("Invalid Character or format!!");
             }
-
-            if (!char.IsNumber(str[str.Length - 1]))
-            {
-                // put a comment inside of these
-                throw new ArgumentException();
-            }
-
-            bool letterExpected = true;
-            bool canBeDigit = false;
-
-            if (char.IsNumber(str[0]))
-            {
-                letterExpected = false;
-                canBeDigit = true;
-            }
-
-            
-
-            foreach (char i in str)
-            {
-                if (char.IsLetter(i) && letterExpected)
-                {
-                    canBeDigit = true;
-                }
-/*                else if (canBeDigit)
-                {
-                    letterExpected = false;
-                }*/
-                else if (char.IsDigit(i) && canBeDigit)
-                {
-                    letterExpected = false;
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
-
-            }
-
-            return;
         }
 
         /// <summary>
