@@ -6,8 +6,8 @@ namespace EvaluatorTester
     {
         static void Main(string[] args)
         {
-            Evaluator.Evaluate("1 +       A12 - 2", null);
-            Console.WriteLine("Done");
+            
+            Console.WriteLine(Evaluator.Evaluate("1 +  1 -1", null));
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 
 namespace FormulaEvaluator
@@ -22,26 +23,21 @@ namespace FormulaEvaluator
                 // check if a variable has been presented.
                 // if it has then get its value and put into tokens list
 
-                // WRITE HELPER METHOD THAT CHECKS IF SUBSTRING IS A VARIABLE
-
-                /*if (!char.IsLetter(substrings[i]))
+                if (isVariable(substrings[i]))
                 {
-                    substrings[i] = variableEvaluator(substrings[i]);
+                    // call variableEvaluator and put that into substrings instead of the variable
+                    substrings[i] = variableEvaluator(substrings[i]).ToString();
                 }
-                tokens[i] = substrings[i][0];*/
             }
 
             // Implement algorithm using Stacks
             
+            // By this point the substrings array should only have numbers and operators
+            
             for(int i = 0; i < substrings.Length; i++)
             {
-                // if Token is a NUMBER, go in
-                //x = "235"
-                // 2
-                // A2
-                // *
-               
-                if (char.IsNumber(substrings[i]))
+               // if token is a number, go in
+                if (char.IsNumber(substrings[i][0]))
                 {
                     // if there is an operator in the action stack, check if its multiply or divide
                     if(action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
@@ -50,33 +46,142 @@ namespace FormulaEvaluator
                         if(tempOperator == '*')
                         {
                             action.Pop();
-                            value.Push(value.Pop() * tokens[i]);
+                            value.Push(value.Pop() * Int32.Parse(substrings[i]));
 
                         }
                         else if (tempOperator == '/')
                         {
                             action.Pop();
-                            value.Push(value.Pop() / tokens[i]);
+                            value.Push(value.Pop() / Int32.Parse(substrings[i]));
                             // add check for division by zero??
                         }
 
                     }
                     else
                     {
-                        value.Push(tokens[i]);
+                        // if there isn't an operator, push the value into the stack
+                        value.Push(Int32.Parse(substrings[i]));
                     }
                 }
-                // if token is a VARIABLE, go in
-                else if ()
-                {
+                // token is DEFINITELY an operator at this point
 
+                char symbol = substrings[i][0];
+                
+                switch(symbol)
+                {
+                    case '+':
+                    case '-':
+                        // if there is something in top of stack
+                        if(action.TryPeek(out char tempOperator))
+                        {
+                            if(tempOperator == '+')
+                            {
+                                action.Pop();
+                                value.Push(value.Pop() + value.Pop());
+                            }
+                            else if (tempOperator == '-')
+                            {
+                                action.Pop();
+                                value.Push(value.Pop() - value.Pop());
+                            }
+                        }
+                        action.Push(symbol);
+                        break;
+                    case '*':
+                    case '/':
+                    case '(':
+                        action.Push(symbol);
+                        break;
+                    case ')':
+
+                        // check what is at the top of action stack, proceed accordingly
+                        if (action.TryPeek(out char tempOp))
+                        {
+                            if (tempOp == '+')
+                            {
+                                // do the addition
+                                action.Pop();
+                                value.Push(value.Pop() + value.Pop());
+
+                                // check if there is a left parenthesis, throw exception if not
+                                if(action.TryPeek(out char temp) && temp == '(')
+                                {
+                                    action.Pop();
+                                }
+                                else
+                                {
+                                    throw new ArgumentException("Missing ( in expression");
+                                }
+                            }
+                            else if (tempOp == '-')
+                            {
+                                // do the subtraction
+                                action.Pop();
+                                value.Push(value.Pop() - value.Pop());
+
+                                // check if there is a left parenthesis, throw exception if not
+                                if (action.TryPeek(out char temp) && temp == '(')
+                                {
+                                    action.Pop();
+                                }
+                                else
+                                {
+                                    throw new ArgumentException("Missing ( in expression");
+                                }
+                            }
+                            else if (tempOp == '*')
+                            {
+                                action.Pop();
+                                value.Push(value.Pop() * value.Pop());
+                            }
+                            else if (tempOp == '/')
+                            {
+                                action.Pop();
+                                value.Push(value.Pop() / value.Pop());
+                            }
+                            else
+                            {
+                                throw new ArgumentException("Invalid operator, late catch");
+                            }
+                        }
+                        break;
                 }
             }
+
+            // Last token has been processed
+
+            // if action stack is empty
+            if(action.Count == 0)
+            {
+                int result = value.Pop();
+                if (value.Count != 0)
+                {
+                    throw new InvalidOperationException("Something went wrong, ");
+                }
+                else
+                {
+                    return result;
+                }
+            }
+
+            // If operator stack is not empty
+            char lastOp = action.Pop();
+            switch (lastOp)
+            {
+                case '+':
+                    value.Push(value.Pop() + value.Pop());
+                    return value.Pop();
+                case '-':
+                    //var v1 = value.Pop();
+                    //var v2 = value.Pop();
+                    value.Push(value.Pop() - value.Pop());
+                    return value.Pop();
+            }
+
+            throw new Exception("Something went wrong, unacounted for case");
             
 
             
-
-            return 0;
         
         }
 
@@ -138,5 +243,26 @@ namespace FormulaEvaluator
             return;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        private static bool isVariable(string str)
+        {
+            bool hasLetter = false;
+            foreach(char x in str)
+            {
+                if (char.IsLetter(x))
+                {
+                    hasLetter = true;
+                }
+                else if(char.IsDigit(x) && hasLetter)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
