@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 
@@ -23,7 +24,7 @@ namespace FormulaEvaluator
                 // check if a variable has been presented.
                 // if it has then get its value and put into tokens list
 
-                if (isVariable(substrings[i]))
+                if (IsVariable(substrings[i]))
                 {
                     // call variableEvaluator and put that into substrings instead of the variable
                     substrings[i] = variableEvaluator(substrings[i]).ToString();
@@ -43,18 +44,10 @@ namespace FormulaEvaluator
                     if(action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
                     {
                         // there is an operator present, see if its multiply or divide, if so, do that operation
-                        if(tempOperator == '*')
-                        {
-                            action.Pop();
-                            value.Push(value.Pop() * Int32.Parse(substrings[i]));
-
-                        }
-                        else if (tempOperator == '/')
-                        {
-                            action.Pop();
-                            value.Push(value.Pop() / Int32.Parse(substrings[i]));
-                            // add check for division by zero??
-                        }
+                        value.Push(DoOperation(value.Pop(), Int32.Parse(substrings[i]), action.Pop()));
+                        
+                        // add check for division by zero??
+                        
 
                     }
                     else
@@ -74,16 +67,7 @@ namespace FormulaEvaluator
                         // if there is something in top of stack
                         if(action.TryPeek(out char tempOperator))
                         {
-                            if(tempOperator == '+')
-                            {
-                                action.Pop();
-                                value.Push(value.Pop() + value.Pop());
-                            }
-                            else if (tempOperator == '-')
-                            {
-                                action.Pop();
-                                value.Push(value.Pop() - value.Pop());
-                            }
+                            value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
                         }
                         action.Push(symbol);
                         break;
@@ -100,8 +84,10 @@ namespace FormulaEvaluator
                             if (tempOp == '+')
                             {
                                 // do the addition
-                                action.Pop();
-                                value.Push(value.Pop() + value.Pop());
+                                // action.Pop();
+                                // value.Push(value.Pop() + value.Pop());
+
+                                value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
 
                                 // check if there is a left parenthesis, throw exception if not
                                 if(action.TryPeek(out char temp) && temp == '(')
@@ -116,8 +102,7 @@ namespace FormulaEvaluator
                             else if (tempOp == '-')
                             {
                                 // do the subtraction
-                                action.Pop();
-                                value.Push(value.Pop() - value.Pop());
+                                value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
 
                                 // check if there is a left parenthesis, throw exception if not
                                 if (action.TryPeek(out char temp) && temp == '(')
@@ -131,13 +116,11 @@ namespace FormulaEvaluator
                             }
                             else if (tempOp == '*')
                             {
-                                action.Pop();
-                                value.Push(value.Pop() * value.Pop());
+                                value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
                             }
                             else if (tempOp == '/')
                             {
-                                action.Pop();
-                                value.Push(value.Pop() / value.Pop());
+                                value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
                             }
                             else
                             {
@@ -165,8 +148,11 @@ namespace FormulaEvaluator
             }
 
             // If operator stack is not empty
-            char lastOp = action.Pop();
-            switch (lastOp)
+
+            return DoOperation(value.Pop(), value.Pop(), action.Pop());
+
+            //char lastOp = action.Pop();
+            /*switch (lastOp)
             {
                 case '+':
                     value.Push(value.Pop() + value.Pop());
@@ -176,7 +162,7 @@ namespace FormulaEvaluator
                     //var v2 = value.Pop();
                     value.Push(value.Pop() - value.Pop());
                     return value.Pop();
-            }
+            }*/
 
             throw new Exception("Something went wrong, unacounted for case");
             
@@ -248,7 +234,7 @@ namespace FormulaEvaluator
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
-        private static bool isVariable(string str)
+        private static bool IsVariable(string str)
         {
             bool hasLetter = false;
             foreach(char x in str)
@@ -263,6 +249,23 @@ namespace FormulaEvaluator
                 }
             }
             return false;
+        }
+
+        private static int DoOperation(int num2, int num1, char op)
+        {
+            switch (op)
+            {
+                case '+':
+                    return num1 + num2;
+                case '-':
+                    return num1 - num2;
+                case '*':
+                    return num1 * num2;
+                case '/':
+                    return num1 / num2;
+            }
+
+            throw new Exception("DoOperation has failed, likely recieved invalid operator");
         }
     }
 }
