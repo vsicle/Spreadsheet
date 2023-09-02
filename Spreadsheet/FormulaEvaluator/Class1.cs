@@ -10,6 +10,7 @@ namespace FormulaEvaluator
     /// </summary>
     public static class Evaluator
     {
+        // declare the variable lookup delegate
         public delegate int Lookup(String v);
         public static int Evaluate (String expression, Lookup variableEvaluator)
         {
@@ -157,7 +158,15 @@ namespace FormulaEvaluator
             }
 
                 // If operator stack is not empty
+            if(value.Count == 2)
+            {
                 return DoOperation(value.Pop(), value.Pop(), action.Pop());
+            }
+            else
+            {
+                throw new Exception("Unary negative or improper input format");
+            }
+                
 
         }
 
