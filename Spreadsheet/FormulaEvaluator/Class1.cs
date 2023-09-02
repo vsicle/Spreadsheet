@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 
 namespace FormulaEvaluator
 {
+    /// <summary>
+    /// Evaluator class used to complete arithmetic using correct order of operations
+    /// </summary>
     public static class Evaluator
     {
         public delegate int Lookup(String v);
@@ -19,6 +22,8 @@ namespace FormulaEvaluator
             for (int i = 0; i < substrings.Length; i++)
             {
                 substrings[i] = substrings[i].Trim();
+
+                // ignore whitespace
                 if(substrings[i].Length != 0)
                     ValidateStr(substrings[i]);
 
@@ -29,13 +34,15 @@ namespace FormulaEvaluator
                 {
                     // call variableEvaluator and put that into substrings instead of the variable
                     substrings[i] = variableEvaluator(substrings[i]).ToString();
+                    if (substrings[i].Length == 0)
+                    {
+                        throw new Exception("Variable had no value");
+                    }
                 }
             }
+            
+            // go through every token, ignoring whitespace
 
-            // Implement algorithm using Stacks
-            
-            // By this point the substrings array should only have numbers and operators
-            
             for(int i = 0; i < substrings.Length; i++)
             {
                 if (substrings[i].Length != 0)
@@ -46,11 +53,9 @@ namespace FormulaEvaluator
                         // if there is an operator in the action stack, check if its multiply or divide
                         if (action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
                         {
+
                             // there is an operator present, see if its multiply or divide, if so, do that operation
                             value.Push(DoOperation(value.Pop(), Int32.Parse(substrings[i]), action.Pop()));
-
-                            // add check for division by zero??
-
 
                         }
                         else
@@ -61,26 +66,25 @@ namespace FormulaEvaluator
                     }
                     else
                     {
-
-
                         // token is DEFINITELY an operator at this point
 
                         char symbol = substrings[i][0];
-
-                        // change to string and add double quotes
 
                         switch (symbol)
                         {
                             case '+':
                             case '-':
-                                // if there is something in top of stack
+                                // if there is something in top of actions aka operators stack
                                 
                                 if (action.TryPeek(out char tempOperator) && tempOperator == '+' || tempOperator == '-')
                                 {
+                                    // do that operation
                                     value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
                                 }
+                                // push the symbol into action stack
                                 action.Push(symbol);
                                 break;
+                            // all 3 of these do the same thing
                             case '*':
                             case '/':
                             case '(':
@@ -94,11 +98,8 @@ namespace FormulaEvaluator
                                     if (tempOp == '+')
                                     {
                                         // do the addition
-                                        // action.Pop();
-                                        // value.Push(value.Pop() + value.Pop());
 
                                         value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
-
 
                                     }
                                     else if (tempOp == '-')
@@ -106,10 +107,10 @@ namespace FormulaEvaluator
                                         // do the subtraction
                                         value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
 
-                                        // check if there is a left parenthesis, throw exception if not
-
                                     }
 
+                                    // if the opening parenthesis is found as expected, pop it
+                                    // if not, throw exception
                                     if (action.TryPeek(out char temp) && temp == '(')
                                     {
                                         action.Pop();
@@ -120,6 +121,7 @@ namespace FormulaEvaluator
                                     }
                                 }
 
+                                // check if theres any multiplication or division, if so do it
                                 if (action.TryPeek(out char tempA))
                                 {
                                     if (tempA == '*')
@@ -131,10 +133,6 @@ namespace FormulaEvaluator
                                         value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
                                     }
                                 }
-/*                                    else
-                                    {
-                                        throw new ArgumentException("Invalid operator, late catch");
-                                    }*/
                                 
                                 break;
                         }
@@ -143,8 +141,8 @@ namespace FormulaEvaluator
             }
 
             // Last token has been processed
-
-            // if action stack is empty
+            // if action stack is empty then result should be the only value in value stack
+            // if this is untrue, throw exception
             if(action.Count == 0)
             {
                 int result = value.Pop();
@@ -158,23 +156,17 @@ namespace FormulaEvaluator
                 }
             }
 
-            // If operator stack is not empty
-            return DoOperation(value.Pop(), value.Pop(), action.Pop());
+                // If operator stack is not empty
+                return DoOperation(value.Pop(), value.Pop(), action.Pop());
 
-
-            throw new Exception("Something went wrong, unacounted for case");
-            
-
-            
-        
         }
 
         /// <summary>
-        ///
+        /// If the string doesn't match expectations then throw an illegal argument exception
         /// 
         /// </summary>
-        /// <param name="str"></param>
-        /// <exception cref="ArgumentException"></exception>
+        /// <param name="str"></param> input string that needs to be validated
+        /// <exception cref="ArgumentException"></exception> invalid iput detected
         private static void ValidateStr(string str)
         {
             if (!Regex.IsMatch(str, @"^(?:\d+|[a-zA-Z]+\d+|[*/+\-()]+)$"))
@@ -184,10 +176,10 @@ namespace FormulaEvaluator
         }
 
         /// <summary>
-        /// 
+        /// Helper method do decide if the input string is a valid variable
         /// </summary>
-        /// <param name="str"></param>
-        /// <returns></returns>
+        /// <param name="str"></param> input string that is being validated for proper variable format
+        /// <returns></returns> whether the string is a valid variable format
         private static bool IsVariable(string str)
         {
             bool hasLetter = false;
@@ -205,6 +197,15 @@ namespace FormulaEvaluator
             return false;
         }
 
+        /// <summary>
+        /// Helper method that will complete addition, subtraction, multiplication, or division.
+        /// Accounting for division by zero
+        /// </summary>
+        /// <param name="num2"></param> second number in operation
+        /// <param name="num1"></param> first number in operation
+        /// <param name="op"></param> the operator character
+        /// <returns></returns> result of the operation being done
+        /// <exception cref="Exception"></exception> thrown for division by zero or invalid operator being passed in (unlikely)
         private static int DoOperation(int num2, int num1, char op)
         {
             switch (op)
