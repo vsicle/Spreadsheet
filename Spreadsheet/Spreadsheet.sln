@@ -5,9 +5,13 @@ VisualStudioVersion = 17.7.34018.315
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FormulaEvaluator", "FormulaEvaluator\FormulaEvaluator.csproj", "{7631E020-67B0-46B3-AF95-B0EE49499A99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvaluatorTester", "EvaluatorTester\EvaluatorTester.csproj", "{32B2C8F3-FFE2-4EB6-A8EA-CC9A72FF0C27}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EvaluatorTester", "EvaluatorTester\EvaluatorTester.csproj", "{32B2C8F3-FFE2-4EB6-A8EA-CC9A72FF0C27}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormulaEvaluatorTests", "FormulaEvaluatorTests\FormulaEvaluatorTests.csproj", "{7303EC4F-FBCF-4DB2-8BB5-5B9A3FB85DB2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FormulaEvaluatorTests", "FormulaEvaluatorTests\FormulaEvaluatorTests.csproj", "{7303EC4F-FBCF-4DB2-8BB5-5B9A3FB85DB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyGraph", "DependencyGraph\DependencyGraph.csproj", "{0768FD8D-3105-4B4C-8946-9A8F071E52C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyGraphTests", "DependencyGraphTests\DependencyGraphTests.csproj", "{81560169-2068-4084-9F7C-73307481C903}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +31,14 @@ Global
 		{7303EC4F-FBCF-4DB2-8BB5-5B9A3FB85DB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7303EC4F-FBCF-4DB2-8BB5-5B9A3FB85DB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7303EC4F-FBCF-4DB2-8BB5-5B9A3FB85DB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0768FD8D-3105-4B4C-8946-9A8F071E52C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0768FD8D-3105-4B4C-8946-9A8F071E52C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0768FD8D-3105-4B4C-8946-9A8F071E52C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0768FD8D-3105-4B4C-8946-9A8F071E52C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81560169-2068-4084-9F7C-73307481C903}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81560169-2068-4084-9F7C-73307481C903}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81560169-2068-4084-9F7C-73307481C903}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81560169-2068-4084-9F7C-73307481C903}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
