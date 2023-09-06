@@ -32,11 +32,19 @@ namespace SpreadsheetUtilities;
 /// </summary>
 public class DependencyGraph
 {
+
+    private Dictionary<string, HashSet<string>> dependents;
+    private Dictionary<string, HashSet<string>> dependees;
+    private int numDependencies;
+
     /// <summary>
     /// Creates an empty DependencyGraph.
     /// </summary>
     public DependencyGraph()
     {
+        dependees = new Dictionary<string, HashSet<string>>();
+        dependents  = new Dictionary<string, HashSet<string>>();
+        numDependencies = 0;
     }
 
 
@@ -46,9 +54,11 @@ public class DependencyGraph
     /// </summary>
     public int NumDependencies
     {
-        // clarify this in LAB
-        // what is this actually counting
-        get { return 0; }
+
+        get 
+        { 
+            return numDependencies;
+        }
     }
 
 
@@ -58,8 +68,14 @@ public class DependencyGraph
     /// </summary>
     public int NumDependees(string s)
     {
-
-        return 0;
+        if(dependees.ContainsKey(s))
+        {
+            return dependees[s].Count;
+        }
+        else
+        {
+            return 0;
+        }
     }
 
 
@@ -68,7 +84,15 @@ public class DependencyGraph
     /// </summary>
     public bool HasDependents(string s)
     {
-        return false;
+        if (dependents.ContainsKey(s) && dependents[s].Count != 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        
     }
 
 
@@ -77,8 +101,24 @@ public class DependencyGraph
     /// </summary>
     public bool HasDependees(string s)
     {
-        return false;
+        if (dependees.ContainsKey(s) && dependees[s].Count != 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
+
+
+
+    // ^^^^^^ SHOULD WORK
+
+    // LEFT OFF HERE, RESUME HERE
+
+    // vvvvvv Unfinished / Untouched
+
 
 
     /// <summary>
@@ -112,6 +152,7 @@ public class DependencyGraph
     public void AddDependency(string s, string t)
     {
         /// write your code here
+        numDependencies++;
     }
 
 
@@ -122,6 +163,7 @@ public class DependencyGraph
     /// <param name="t"></param>
     public void RemoveDependency(string s, string t)
     {
+        numDependencies--;
     }
 
 
