@@ -226,9 +226,9 @@ namespace FormulaEvaluator
                 case '*':
                     return num1 * num2;
                 case '/':
-                    if(num2 == 0)
+                    if(num1 == 0)
                     {
-                        throw new Exception("Division by zero error");
+                        throw new ArgumentException("Division by zero error");
                     }
                     return num2 / num1;
             }
