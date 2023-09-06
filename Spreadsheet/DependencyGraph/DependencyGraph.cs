@@ -113,20 +113,23 @@ public class DependencyGraph
 
 
 
-    // ^^^^^^ SHOULD WORK
-
-    // LEFT OFF HERE, RESUME HERE
-
-    // vvvvvv Unfinished / Untouched
-
-
-
     /// <summary>
     /// Enumerates dependents(s).
     /// </summary>
     public IEnumerable<string> GetDependents(string s)
     {
-        return null;
+        List<string> result = new List<string>();
+
+        if (dependents.ContainsKey(s))
+        {
+            foreach(var i in dependents[s])
+            {
+                result.Add(i);
+            }
+            
+        }
+
+        return result;
     }
 
 
@@ -135,8 +138,33 @@ public class DependencyGraph
     /// </summary>
     public IEnumerable<string> GetDependees(string s)
     {
-        return null;
+        List<string> result = new List<string>();
+
+        if (dependees.ContainsKey(s))
+        {
+            foreach (var i in dependees[s])
+            {
+                result.Add(i);
+            }
+
+        }
+
+        return result;
     }
+
+
+
+
+
+
+    // ^^^^^^ SHOULD WORK
+
+    // LEFT OFF HERE, RESUME HERE
+
+    // vvvvvv Unfinished / Untouched
+
+
+
 
 
     /// <summary>
