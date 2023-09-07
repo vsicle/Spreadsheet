@@ -165,7 +165,19 @@ public class DependencyGraph
     /// <param name="t"> t cannot be evaluated until s is</param>
     public void AddDependency(string s, string t)
     {
-        // hashSet doesn't allow duplicates so this is safe
+        // make sure dependents dictionary has hashSet for s
+        if (!dependents.ContainsKey(s))
+        {
+            dependents[s] = new HashSet<string>();
+        }
+
+        // make sure dependents dictionary has hashSet for t
+        if (!dependees.ContainsKey(t))
+        {
+            dependees[t] = new HashSet<string>();
+        }
+
+        // Add the dependency
         dependents[s].Add(t);
         dependees[t].Add(s);
 
@@ -209,7 +221,7 @@ public class DependencyGraph
     /// </summary>
     public void ReplaceDependents(string s, IEnumerable<string> newDependents)
     {
-        if (dependents.ContainsKey(s))
+        if (dependents.ContainsKey(s) && newDependents.Count() > 0)
         {
             // make temp copy of dependents
             HashSet<string> temp = new HashSet<string>(dependents[s]);
