@@ -153,20 +153,6 @@ public class DependencyGraph
     }
 
 
-
-
-
-
-    // ^^^^^^ SHOULD WORK
-
-    // LEFT OFF HERE, RESUME HERE
-
-    // vvvvvv Unfinished / Untouched
-
-
-
-
-
     /// <summary>
     /// <para>Adds the ordered pair (s,t), if it doesn't exist</para>
     /// 
@@ -179,7 +165,10 @@ public class DependencyGraph
     /// <param name="t"> t cannot be evaluated until s is</param>
     public void AddDependency(string s, string t)
     {
-        /// write your code here
+        // hashSet doesn't allow duplicates so this is safe
+        dependents[s].Add(t);
+        dependees[t].Add(s);
+
         numDependencies++;
     }
 
@@ -191,6 +180,25 @@ public class DependencyGraph
     /// <param name="t"></param>
     public void RemoveDependency(string s, string t)
     {
+
+        if(dependents.ContainsKey(s) && dependents[s].Contains(t) &&
+            dependees.ContainsKey(t) && dependees[t].Contains(s))
+        {
+            // remove dependency if it exists
+            dependents[s].Remove(t);
+            dependees[t].Remove(s);
+
+            // clean up potentially empty hashMaps in dictionary
+            if (dependents[s].Count < 1)
+            {
+                dependents.Remove(s);
+            }
+            if (dependees[t].Count < 1)
+            {
+                dependees.Remove(t);
+            }
+        }
+        // update numDependencies
         numDependencies--;
     }
 
@@ -201,6 +209,22 @@ public class DependencyGraph
     /// </summary>
     public void ReplaceDependents(string s, IEnumerable<string> newDependents)
     {
+        if (dependents.ContainsKey(s))
+        {
+            // make temp copy of dependents
+            HashSet<string> temp = new HashSet<string>(dependents[s]);
+
+            // get rid of all dependencies
+            foreach(string i in temp){
+                RemoveDependency(s, i);
+            }
+
+            // Add all new dependents to s
+            foreach(string x in newDependents)
+            {
+                AddDependency(s, x);
+            }
+        }
     }
 
 
@@ -210,5 +234,22 @@ public class DependencyGraph
     /// </summary>
     public void ReplaceDependees(string s, IEnumerable<string> newDependees)
     {
+        if (dependees.ContainsKey(s))
+        {
+            // make temp copy of dependees
+            HashSet<string> temp = new HashSet<string>(dependees[s]);
+
+            // get rid of all dependencies
+            foreach (string i in temp)
+            {
+                RemoveDependency(i, s);
+            }
+
+            // Add all new dependents to s
+            foreach (string x in newDependees)
+            {
+                AddDependency(x, s);
+            }
+        }
     }
 }
