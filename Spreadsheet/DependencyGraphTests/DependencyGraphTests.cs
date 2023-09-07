@@ -86,7 +86,77 @@ public class DependencyGraphTest
     }
 
 
+    [TestMethod()]
+    public void NumDependeesTest()
+    {
+        DependencyGraph x = new DependencyGraph();
+        x.AddDependency("a", "b");
+        x.AddDependency("a", "c");
+        x.AddDependency("a", "d");
+        x.AddDependency("a", "e");
+        x.AddDependency("a", "f");
+        Assert.AreEqual(1, x.NumDependees("b"));
+        Assert.AreEqual(1, x.NumDependees("c"));
+        Assert.AreEqual(1, x.NumDependees("d"));
 
+        DependencyGraph y = new DependencyGraph();
+        y.AddDependency("b", "a");
+        y.AddDependency("c", "a");
+        y.AddDependency("d", "a");
+        y.AddDependency("e", "a");
+        Assert.AreEqual(4, y.NumDependees("a"));
+    }
+
+    [TestMethod()]
+    public void EmptyNumDependeesTest()
+    {
+        DependencyGraph x = new DependencyGraph();
+        Assert.AreEqual(0, x.NumDependees("a"));
+
+        // do dependees need to include upstream dependees
+
+        // a -> b -> c -> d
+        // does d have 3 or 1 dependee
+
+        x.AddDependency("a", "b");
+        x.AddDependency("c", "d");
+        // IS THIS A CORRECT TEST????
+        Assert.AreEqual(1, x.NumDependees("d"));
+    }
+
+    [TestMethod()]
+    public void HasDependentsTest()
+    {
+        DependencyGraph x = new DependencyGraph();
+        Assert.AreEqual(false, x.HasDependents("a"));
+
+        x.AddDependency("a", "b");
+        x.AddDependency("a", "c");
+        x.AddDependency("a", "d");
+        Assert.AreEqual(true, x.HasDependents("a"));
+    }
+
+    [TestMethod()]
+    public void HasDependeesTest()
+    {
+        DependencyGraph x = new DependencyGraph();
+        Assert.AreEqual(false, x.HasDependees("b"));
+
+        x.AddDependency("a", "b");
+
+        Assert.AreEqual(false, x.HasDependees("a"));
+
+        x.AddDependency("b", "c");
+
+        Assert.AreEqual(true, x.HasDependees("b"));
+
+        DependencyGraph y = new DependencyGraph();
+        y.AddDependency("b", "a");
+        y.AddDependency("c", "a");
+        y.AddDependency("d", "a");
+        y.AddDependency("e", "a");
+        Assert.AreEqual(4, y.NumDependees("a"));
+    }
 
     /// <summary>
     ///Non-empty graph contains something
