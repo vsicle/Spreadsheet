@@ -1,6 +1,7 @@
 ﻿// Skeleton implementation by: Joe Zachary, Daniel Kopta, Travis Martin for CS 3500
 // Last updated: August 2023 (small tweak to API)
 
+
 namespace SpreadsheetUtilities;
 
 /// <summary>
@@ -54,7 +55,6 @@ public class DependencyGraph
     /// </summary>
     public int NumDependencies
     {
-
         get 
         { 
             return numDependencies;
@@ -68,14 +68,9 @@ public class DependencyGraph
     /// </summary>
     public int NumDependees(string s)
     {
-        if(dependees.ContainsKey(s))
-        {
+        if (dependees.ContainsKey(s))
             return dependees[s].Count;
-        }
-        else
-        {
-            return 0;
-        }
+        return 0;
     }
 
 
@@ -163,6 +158,9 @@ public class DependencyGraph
     /// </summary>
     /// <param name="s"> s must be evaluated first. T depends on S</param>
     /// <param name="t"> t cannot be evaluated until s is</param>
+    /// 
+
+
     public void AddDependency(string s, string t)
     {
         // make sure dependents dictionary has hashSet for s
@@ -177,11 +175,11 @@ public class DependencyGraph
             dependees[t] = new HashSet<string>();
         }
 
-        // Add the dependency
-        dependents[s].Add(t);
-        dependees[t].Add(s);
-
-        numDependencies++;
+        if (dependents[s].Add(t) && dependees[t].Add(s))
+        {
+            // if both adds are successful then its not a duplicate, increment numDependencies
+            numDependencies++;
+        }
     }
 
 

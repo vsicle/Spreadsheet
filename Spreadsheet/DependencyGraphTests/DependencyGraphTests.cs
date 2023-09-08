@@ -113,15 +113,21 @@ public class DependencyGraphTest
         DependencyGraph x = new DependencyGraph();
         Assert.AreEqual(0, x.NumDependees("a"));
 
-        // do dependees need to include upstream dependees
-
+        // long chain of dependees
         // a -> b -> c -> d
-        // does d have 3 or 1 dependee
+
 
         x.AddDependency("a", "b");
         x.AddDependency("c", "d");
-        // IS THIS A CORRECT TEST????
         Assert.AreEqual(1, x.NumDependees("d"));
+
+        // wide single level above s
+        DependencyGraph y = new DependencyGraph();
+        y.AddDependency("b", "a");
+        y.AddDependency("c", "a");
+        y.AddDependency("d", "a");
+        y.AddDependency("e", "a");
+        Assert.AreEqual(4, y.NumDependees("a"));
     }
 
     [TestMethod()]
@@ -150,12 +156,7 @@ public class DependencyGraphTest
 
         Assert.AreEqual(true, x.HasDependees("b"));
 
-        DependencyGraph y = new DependencyGraph();
-        y.AddDependency("b", "a");
-        y.AddDependency("c", "a");
-        y.AddDependency("d", "a");
-        y.AddDependency("e", "a");
-        Assert.AreEqual(4, y.NumDependees("a"));
+        
     }
 
     /// <summary>
@@ -172,6 +173,32 @@ public class DependencyGraphTest
         Assert.AreEqual(4, t.NumDependencies);
     }
 
+    [TestMethod()]
+    public void DuplicateDependencies()
+    {
+        DependencyGraph t = new DependencyGraph();
+        t.AddDependency("a", "b");
+        t.AddDependency("a", "b");
+        t.AddDependency("c", "d");
+        t.AddDependency("c", "d");
+        Assert.AreEqual(2, t.NumDependencies);
+    }
+
+    [TestMethod]
+    public void RemoveDependency()
+    {
+
+        DependencyGraph graph = new DependencyGraph();
+        graph.AddDependency("a", "b");
+        graph.AddDependency("b", "c");
+
+        graph.RemoveDependency("a", "b");
+
+        Assert.AreEqual(1, graph.NumDependencies);
+        Assert.IsFalse(graph.HasDependents("a")); 
+        Assert.IsTrue(graph.HasDependents("b"));  
+        Assert.IsFalse(graph.HasDependents("c")); 
+    }
 
     /// <summary>
     ///Non-empty graph contains something
