@@ -261,5 +261,12 @@ public class DependencyGraph
                 AddDependency(x, s);
             }
         }
+        else
+        {
+            foreach(string x in newDependees)
+            {
+                AddDependency(x, s);
+            }
+        }
     }
 }
