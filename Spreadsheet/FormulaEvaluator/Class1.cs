@@ -144,7 +144,7 @@ namespace FormulaEvaluator
             // Last token has been processed
             // if action stack is empty then result should be the only value in value stack
             // if this is untrue, throw exception
-            if(action.Count == 0)
+            if(action.Count == 0 && value.Count != 0)
             {
                 int result = value.Pop();
                 if (value.Count != 0)
@@ -157,14 +157,14 @@ namespace FormulaEvaluator
                 }
             }
 
-                // If operator stack is not empty
+            // If operator stack is not empty
             if(value.Count == 2)
             {
                 return DoOperation(value.Pop(), value.Pop(), action.Pop());
             }
             else
             {
-                throw new Exception("Unary negative or improper input format");
+                throw new ArgumentException("Unary negative or improper input format");
             }
                 
 
