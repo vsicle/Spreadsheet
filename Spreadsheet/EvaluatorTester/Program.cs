@@ -1,4 +1,6 @@
 ﻿using FormulaEvaluator;
+using SpreadsheetUtilities;
+using System.Dynamic;
 
 namespace EvaluatorTester
 {
@@ -10,7 +12,21 @@ namespace EvaluatorTester
         /// <param name="args"></param>
         static void Main(string[] args)
         {
-            // simple arithmetic
+
+
+
+            string formula = " x      28 * (3+x) - 4.5e-2";
+
+            var tokens = Formula.GetTokens(formula);
+
+            foreach (var token in tokens)
+            {
+                Console.WriteLine(token);
+            }
+
+
+
+            /*// simple arithmetic
             Console.WriteLine(Evaluator.Evaluate("1+1", null));
             Console.WriteLine(Evaluator.Evaluate("1-1", null));
             Console.WriteLine(Evaluator.Evaluate("2*2", null));
@@ -26,7 +42,7 @@ namespace EvaluatorTester
 
             // test with delegate for variables
             Console.WriteLine(Evaluator.Evaluate("A1+B2", MyLookup));
-            Console.WriteLine(Evaluator.Evaluate("AA2 / 2", MyLookup));
+            Console.WriteLine(Evaluator.Evaluate("AA2 / 2", MyLookup));*/
 
 
         }

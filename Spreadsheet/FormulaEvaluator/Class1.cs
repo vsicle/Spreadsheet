@@ -14,7 +14,7 @@ namespace FormulaEvaluator
         public delegate int Lookup(String v);
         public static int Evaluate (String expression, Lookup variableEvaluator)
         {
-            Stack<int> value = new Stack<int>();
+            Stack<int> valueStack = new Stack<int>();
             Stack<char> action = new Stack<char>();
 
             string[] substrings = Regex.Split(expression, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
@@ -29,7 +29,7 @@ namespace FormulaEvaluator
                     ValidateStr(substrings[i]);
 
                 // check if a variable has been presented.
-                // if it has then get its value and put into tokens list
+                // if it has then get its valueStack and put into tokens list
 
                 if (IsVariable(substrings[i]))
                 {
@@ -37,7 +37,7 @@ namespace FormulaEvaluator
                     substrings[i] = variableEvaluator(substrings[i]).ToString();
                     if (substrings[i].Length == 0)
                     {
-                        throw new Exception("Variable had no value");
+                        throw new Exception("Variable had no valueStack");
                     }
                 }
             }
@@ -56,13 +56,13 @@ namespace FormulaEvaluator
                         {
 
                             // there is an operator present, see if its multiply or divide, if so, do that operation
-                            value.Push(DoOperation(value.Pop(), Int32.Parse(substrings[i]), action.Pop()));
+                            valueStack.Push(DoOperation(valueStack.Pop(), Int32.Parse(substrings[i]), action.Pop()));
 
                         }
                         else
                         {
-                            // if there isn't an operator, push the value into the stack
-                            value.Push(Int32.Parse(substrings[i]));
+                            // if there isn't an operator, push the valueStack into the stack
+                            valueStack.Push(Int32.Parse(substrings[i]));
                         }
                     }
                     else
@@ -80,7 +80,7 @@ namespace FormulaEvaluator
                                 if (action.TryPeek(out char tempOperator) && tempOperator == '+' || tempOperator == '-')
                                 {
                                     // do that operation
-                                    value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
+                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
                                 }
                                 // push the symbol into action stack
                                 action.Push(symbol);
@@ -100,13 +100,13 @@ namespace FormulaEvaluator
                                     {
                                         // do the addition
 
-                                        value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
+                                        valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
 
                                     }
                                     else if (tempOp == '-')
                                     {
                                         // do the subtraction
-                                        value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
+                                        valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
 
                                     }
 
@@ -127,11 +127,11 @@ namespace FormulaEvaluator
                                 {
                                     if (tempA == '*')
                                     {
-                                        value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
+                                        valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
                                     }
                                     else if (tempA == '/')
                                     {
-                                        value.Push(DoOperation(value.Pop(), value.Pop(), action.Pop()));
+                                        valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
                                     }
                                 }
                                 
@@ -142,12 +142,12 @@ namespace FormulaEvaluator
             }
 
             // Last token has been processed
-            // if action stack is empty then result should be the only value in value stack
+            // if action stack is empty then result should be the only valueStack in valueStack stack
             // if this is untrue, throw exception
-            if(action.Count == 0 && value.Count != 0)
+            if(action.Count == 0 && valueStack.Count != 0)
             {
-                int result = value.Pop();
-                if (value.Count != 0)
+                int result = valueStack.Pop();
+                if (valueStack.Count != 0)
                 {
                     throw new InvalidOperationException("Something went wrong");
                 }
@@ -158,9 +158,9 @@ namespace FormulaEvaluator
             }
 
             // If operator stack is not empty
-            if(value.Count == 2)
+            if(valueStack.Count == 2)
             {
-                return DoOperation(value.Pop(), value.Pop(), action.Pop());
+                return DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop());
             }
             else
             {
