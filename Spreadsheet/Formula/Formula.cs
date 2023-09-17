@@ -185,7 +185,7 @@ public class Formula
 
     private static bool IsOperator(string token)
     {
-        return token == "+" || token == "-" || token == "*" || token == "/";
+        return token.Equals("+") || token.Equals("-") || token.Equals("*") || token.Equals("/");
     }
 
     /// <summary>
@@ -258,106 +258,106 @@ public class Formula
                 // Use numers and operators as is.
                 tokens.Add(token);
             }
+        }
 
-            
 
-            // go through every token
-            foreach (string tok in tokens)
+        // go through every token
+        foreach (string tok in tokens)
+        {
+
+            // if token is a number, go in
+            if (IsNumber(tok))
             {
-
-                // if token is a number, go in
-                if (IsNumber(tok))
+                // if there is an operator in the action stack, check if its multiply or divide
+                if (action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
                 {
-                    // if there is an operator in the action stack, check if its multiply or divide
-                    if (action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
-                    {
 
-                        // there is an operator present, see if its multiply or divide, if so, do that operation
-                        valueStack.Push(DoOperation(valueStack.Pop(), Int32.Parse(tok), action.Pop()));
+                    // there is an operator present, see if its multiply or divide, if so, do that operation
+                    valueStack.Push(DoOperation(valueStack.Pop(), Int32.Parse(tok), action.Pop()));
 
-                    }
-                    else
-                    {
-                        // if there isn't an operator, push the valueStack into the stack
-                        valueStack.Push(Int32.Parse(tok));
-                    }
                 }
                 else
                 {
-                    // token is DEFINITELY an operator at this point
+                    // if there isn't an operator, push the valueStack into the stack
+                    valueStack.Push(Int32.Parse(tok));
+                }
+            }
+            else
+            {
+                // token is DEFINITELY an operator at this point
 
-                    char symbol = tok[0];
+                char symbol = tok[0];
 
-                    switch (symbol)
-                    {
-                        case '+':
-                        case '-':
-                            // if there is something in top of actions aka operators stack
+                switch (symbol)
+                {
+                    case '+':
+                    case '-':
+                        // if there is something in top of actions aka operators stack
 
-                            if (action.TryPeek(out char tempOperator) && tempOperator == '+' || tempOperator == '-')
+                        if (action.TryPeek(out char tempOperator) && tempOperator == '+' || tempOperator == '-')
+                        {
+                            // do that operation
+                            valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+                        }
+                        // push the symbol into action stack
+                        action.Push(symbol);
+                        break;
+                    // all 3 of these do the same thing
+                    case '*':
+                    case '/':
+                    case '(':
+                        action.Push(symbol);
+                        break;
+                    case ')':
+
+                        // check what is at the top of action stack, proceed accordingly
+                        if (action.TryPeek(out char tempOp))
+                        {
+                            if (tempOp == '+')
                             {
-                                // do that operation
+                                // do the addition
+
+                                valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+
+                            }
+                            else if (tempOp == '-')
+                            {
+                                // do the subtraction
+                                valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+
+                            }
+
+                            // if the opening parenthesis is found as expected, pop it
+                            // if not, throw exception
+                            if (action.TryPeek(out char temp) && temp == '(')
+                            {
+                                action.Pop();
+                            }
+                            else
+                            {
+                                throw new ArgumentException("Missing ( in expression");
+                            }
+                        }
+
+                        // check if theres any multiplication or division, if so do it
+                        if (action.TryPeek(out char tempA))
+                        {
+                            if (tempA == '*')
+                            {
                                 valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
                             }
-                            // push the symbol into action stack
-                            action.Push(symbol);
-                            break;
-                        // all 3 of these do the same thing
-                        case '*':
-                        case '/':
-                        case '(':
-                            action.Push(symbol);
-                            break;
-                        case ')':
-
-                            // check what is at the top of action stack, proceed accordingly
-                            if (action.TryPeek(out char tempOp))
+                            else if (tempA == '/')
                             {
-                                if (tempOp == '+')
-                                {
-                                    // do the addition
-
-                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
-
-                                }
-                                else if (tempOp == '-')
-                                {
-                                    // do the subtraction
-                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
-
-                                }
-
-                                // if the opening parenthesis is found as expected, pop it
-                                // if not, throw exception
-                                if (action.TryPeek(out char temp) && temp == '(')
-                                {
-                                    action.Pop();
-                                }
-                                else
-                                {
-                                    throw new ArgumentException("Missing ( in expression");
-                                }
+                                valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
                             }
+                        }
 
-                            // check if theres any multiplication or division, if so do it
-                            if (action.TryPeek(out char tempA))
-                            {
-                                if (tempA == '*')
-                                {
-                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
-                                }
-                                else if (tempA == '/')
-                                {
-                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
-                                }
-                            }
-
-                            break;
-                    }
+                        break;
                 }
-
             }
+
         }
+
         // Last token has been processed
         // if action stack is empty then result should be the only valueStack in valueStack stack
         // if this is untrue, throw exception
@@ -376,7 +376,14 @@ public class Formula
 
         // If operator stack is not empty
         // Assume there is one operator and two values
-        return DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop());
+        if (action.Count == 1 && valueStack.Count == 2)
+        {
+            return DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop());
+        }
+        else
+        {
+            return new FormulaError("Something went wrong, logic of evaluate failed");
+        }
 
     }
 
@@ -398,7 +405,7 @@ public class Formula
 
         foreach (string i in _formula)
         {
-            if (IsVariable(i) && !result.Contains(i))
+            if (IsVariable(i))
             {
                 result.Add(i);
             }

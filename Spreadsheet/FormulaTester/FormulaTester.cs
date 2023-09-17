@@ -89,7 +89,7 @@ namespace FormulaTester
             // a method that returns true only if a string consists of one letter followed by one digit
             Func<string, bool> V = str => Regex.IsMatch(str, @"^[a-zA-Z][0-9]$");
 
-            Debug.Assert(new Formula("1+1").GetVariables().SequenceEqual(new List<string>()));  
+            Debug.Assert(new Formula("1+1").GetVariables().SequenceEqual(new List<string>()));
 
             Debug.Assert(new Formula("x+y*z", N, s => true).GetVariables().SequenceEqual(new List<string> { "X", "Y", "Z" }));  // should enumerate "X", "Y", and "Z"
 
@@ -156,6 +156,46 @@ namespace FormulaTester
             Debug.Assert(new Formula("2.0 + x7") == new Formula("2.000 + x7"));
         }
 
+        [TestMethod]
+        public void EvaluateTest()
+        {
+            // a method that converts all the letters in a string to upper case
+            Func<string, string> N = str => str.ToUpper();
+            // a method that returns true only if a string consists of one letter followed by one digit
+            Func<string, bool> V = str => Regex.IsMatch(str, @"^[a-zA-Z][0-9]$");
+
+
+            //new Formula("x+7", N, s => true).Evaluate(L);  // is 11
+            //new Formula("x+7").Evaluate(L);  // is 9
+
+            Formula a = new Formula("1+1");
+            Debug.Assert(Convert.ToDouble(a.Evaluate(L)) == 2.0);
+
+            Debug.Assert(Convert.ToDouble(new Formula("2+3*5+(3+4*8)*5+2").Evaluate(L)) == 194);
+
+
+        }
+
+
+        static Dictionary<string, double> vars = new Dictionary<string, double>()
+    {
+        {"x", 2.0},
+        {"X", 4.0},
+        {"y", 3.0},
+        {"c", 100.0},
+    };
+
+        static double L(string token)
+        {
+            try
+            {
+                return vars[token];
+            }
+            catch (KeyNotFoundException)
+            {
+                throw new ArgumentException(String.Format("Undefined variable '{0}'.", token));
+            }
+        }
 
     }
 }
