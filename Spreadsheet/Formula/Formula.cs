@@ -86,7 +86,8 @@ public class Formula
             throw new FormulaFormatException("Invalid last token, must be number, variable, or closing parenthesis");
         }
 
-        for (int i = 0; i < tokenList.Count; i++)
+        // first and last item have already been checked, check the rest against the rules
+        for (int i = 1; i < tokenList.Count - 1; i++)
         {
             string token = tokenList[i];
 
@@ -104,10 +105,12 @@ public class Formula
                 {
                     closeParenthesesCount++;
                 }
-                else if (i != tokenList.Count - 1 && IsNumber(token) || IsVariable(token) || token.Equals(")"))
+                // Extra Following rule check.
+                // If its a number, variable, or close paren. the next thing must be an operator or close paren.
+                else if (IsNumber(token) || IsVariable(token) || token.Equals(")"))
                 {
                     if (!IsOperator(tokenList[i + 1]) || !tokenList[i + 1].Equals(")"))
-                        {
+                    {
                         throw new FormulaFormatException("Any token that immediately follows a number, a variable, " +
                                                             "or a closing parenthesis must be either an operator or " +
                                                             "a closing parenthesis");
@@ -115,9 +118,16 @@ public class Formula
                     }
                 }
                 //TODO Add if statement for operator following rule
-                if (closeParenthesesCount > openParenthesesCount)
+                // any token following an opening parenthesis or an operator must be either
+                // a number, a variable, or an opening parenthesis
+                else if (token.Equals("(") || IsOperator(token))
                 {
-                    throw new FormulaFormatException("There are more closing parenthesis than opening.");
+                    if (!IsNumber(tokenList[i + 1]) || !IsVariable(tokenList[i + 1]) || tokenList[i + 1].Equals("("))
+                    {
+                        throw new FormulaFormatException("Any token following an opening parenthesis or an operator must" +
+                            " be either a number, a variable, or an opening parenthesis");
+                    }
+
                 }
             }
             else
@@ -126,7 +136,7 @@ public class Formula
             }
         }
 
-        if(openParenthesesCount != closeParenthesesCount)
+        if (openParenthesesCount != closeParenthesesCount)
         {
             throw new FormulaFormatException("Open parenthesis count != close parenthesis count. Extra or missing parenthesis");
         }
@@ -198,8 +208,21 @@ public class Formula
     /// </summary>
     public IEnumerable<string> GetVariables()
     {
+
+        HashSet<string> result = new HashSet<string>();
+
+        foreach (string i in _formula)
+        {
+            if (IsOperator(i) && !result.Contains(i))
+            {
+                result.Add(i);
+            }
+        }
         return new List<string>();
+
     }
+
+
 
     /// <summary>
     /// Returns a string containing no spaces which, if passed to the Formula
@@ -213,7 +236,7 @@ public class Formula
     /// </summary>
     public override string ToString()
     {
-        return "";
+        return string.Join("", _formula);
     }
 
     /// <summary>
@@ -237,8 +260,19 @@ public class Formula
     /// </summary>
     public override bool Equals(object? obj)
     {
-        return false;
-    }
+        if (obj == null)
+        {
+            return false;
+        }
+        else if (obj.GetType() != this.GetType())
+        {
+            return false;
+        }
+        else
+        {
+            return this.GetHashCode() == obj.GetHashCode();
+        }
+}
 
     /// <summary>
     /// Reports whether f1 == f2, using the notion of equality from the Equals method.
@@ -246,7 +280,8 @@ public class Formula
     /// </summary>
     public static bool operator ==(Formula f1, Formula f2)
     {
-        return false;
+        if (f1.Equals(f2)) return true;
+        else return false;
     }
 
     /// <summary>
@@ -255,7 +290,8 @@ public class Formula
     /// </summary>
     public static bool operator !=(Formula f1, Formula f2)
     {
-        return false;
+        if (!f1.Equals(f2)) return true;
+        else return false;
     }
 
     /// <summary>
@@ -265,7 +301,21 @@ public class Formula
     /// </summary>
     public override int GetHashCode()
     {
-        return 0;
+        string noVariableFormula = "";
+
+        // go through the formula and make a copy that doesn't have any variables
+        // when there are no variables we isolate the essence of the formula that doesn't change
+        // then we call getHashCode 
+        foreach (string i in _formula)
+        {
+            if (!IsVariable(i))
+            {
+                noVariableFormula = "" + noVariableFormula + i;
+            }
+        }
+
+        //TODO: does this make an infinite recursive loop? Why or why not
+        return noVariableFormula.GetHashCode();
     }
 
     /// <summary>
