@@ -1,8 +1,4 @@
-﻿using FormulaEvaluator;
-using SpreadsheetUtilities;
-using System.Dynamic;
-
-namespace EvaluatorTester
+﻿namespace EvaluatorTester
 {
     internal class Program
     {
