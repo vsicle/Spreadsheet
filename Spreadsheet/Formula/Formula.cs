@@ -242,12 +242,12 @@ public class Formula
 
         foreach (string i in _formula)
         {
-            if (IsOperator(i) && !result.Contains(i))
+            if (IsVariable(i) && !result.Contains(i))
             {
                 result.Add(i);
             }
         }
-        return new List<string>();
+        return result;
 
     }
 
@@ -289,6 +289,7 @@ public class Formula
     /// </summary>
     public override bool Equals(object? obj)
     {
+
         if (obj == null)
         {
             return false;
@@ -301,7 +302,9 @@ public class Formula
         {
             return this.GetHashCode() == obj.GetHashCode();
         }
-}
+
+    }
+
 
     /// <summary>
     /// Reports whether f1 == f2, using the notion of equality from the Equals method.
@@ -309,8 +312,7 @@ public class Formula
     /// </summary>
     public static bool operator ==(Formula f1, Formula f2)
     {
-        if (f1.Equals(f2)) return true;
-        else return false;
+        return f1.Equals(f2);
     }
 
     /// <summary>
@@ -319,8 +321,8 @@ public class Formula
     /// </summary>
     public static bool operator !=(Formula f1, Formula f2)
     {
-        if (!f1.Equals(f2)) return true;
-        else return false;
+        return !f1.Equals(f2);
+
     }
 
     /// <summary>
@@ -330,24 +332,19 @@ public class Formula
     /// </summary>
     public override int GetHashCode()
     {
-        string hashCode = "";
-
-        // get the ascii representation of 
-        foreach (string i in _formula)
+        System.HashCode hash = new System.HashCode();
+        foreach (string token in _formula)
         {
-            if (IsNumber(i))
+            if (!IsNumber(token))
             {
-                hashCode = hashCode + double.Parse(i);
+                hash.Add(token.GetHashCode());
             }
-            for(int x = 0; x < i.Length; x++)
+            else
             {
-                hashCode = hashCode+"" + (int)i[x];
+                hash.Add(double.Parse(token.ToString()).GetHashCode());
             }
-            
         }
-
-        //TODO: does this make an infinite recursive loop? Why or why not
-        return hashCode.GetHashCode();
+        return hash.ToHashCode();
     }
 
     /// <summary>
