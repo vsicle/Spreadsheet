@@ -8,8 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FormulaEvaluator\FormulaEvaluator.csproj" />
-    <ProjectReference Include="..\Formula\Formula.csproj" />
+    <ProjectReference Include="..\FormulaEvaluator\FormulaEvaluator.csproj">
+      <TreatAsUsed>true</TreatAsUsed>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

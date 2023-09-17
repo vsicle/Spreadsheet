@@ -15,14 +15,6 @@ namespace EvaluatorTester
 
 
 
-            string formula = " x      28 * (3+x) - 4.5e-2";
-
-            var tokens = Formula.GetTokens(formula);
-
-            foreach (var token in tokens)
-            {
-                Console.WriteLine(token);
-            }
 
 
 

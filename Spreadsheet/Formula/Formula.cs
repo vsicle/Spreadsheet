@@ -109,7 +109,7 @@ public class Formula
                 // If its a number, variable, or close paren. the next thing must be an operator or close paren.
                 else if (IsNumber(token) || IsVariable(token) || token.Equals(")"))
                 {
-                    if (!IsOperator(tokenList[i + 1]) || !tokenList[i + 1].Equals(")"))
+                    if (!IsOperator(tokenList[i + 1]) && !tokenList[i + 1].Equals(")"))
                     {
                         throw new FormulaFormatException("Any token that immediately follows a number, a variable, " +
                                                             "or a closing parenthesis must be either an operator or " +
@@ -122,7 +122,7 @@ public class Formula
                 // a number, a variable, or an opening parenthesis
                 else if (token.Equals("(") || IsOperator(token))
                 {
-                    if (!IsNumber(tokenList[i + 1]) || !IsVariable(tokenList[i + 1]) || tokenList[i + 1].Equals("("))
+                    if (!IsNumber(tokenList[i + 1]) && !IsVariable(tokenList[i + 1]) && !tokenList[i + 1].Equals("("))
                     {
                         throw new FormulaFormatException("Any token following an opening parenthesis or an operator must" +
                             " be either a number, a variable, or an opening parenthesis");
