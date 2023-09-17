@@ -67,7 +67,36 @@ public class Formula
     /// </summary>
     public Formula(string formula, Func<string, string> normalize, Func<string, bool> isValid)
     {
-        List<string> tokenList = GetTokens(formula).ToList();
+        // Create a list to store tokens.
+        List<string> tokenList = new List<string>();
+
+        // Break the input formula into tokens and process them one by one.
+        foreach (var token in GetTokens(formula))
+        {
+            string normalized_token = token;
+
+            if (IsVariable(token))
+            {
+                // Normalize the token, using the supplied normalizer.
+                try
+                {
+                    normalized_token = normalize(token);
+                }
+                catch (Exception e)
+                {
+                    throw new FormulaFormatException(String.Format("Illegal variable '{0}'. {1}", normalized_token, e));
+                }
+
+                // Check that the toekn is valid, using the supplied validator.
+                if (!isValid(normalized_token))
+                {
+                    throw new FormulaFormatException(String.Format("Invalid variable '{0}'.", normalized_token));
+                }
+            }
+
+            // Add the token to the token list.
+            tokenList.Add(normalized_token);
+        }
 
 
         int openParenthesesCount = 0;
@@ -301,21 +330,24 @@ public class Formula
     /// </summary>
     public override int GetHashCode()
     {
-        string noVariableFormula = "";
+        string hashCode = "";
 
-        // go through the formula and make a copy that doesn't have any variables
-        // when there are no variables we isolate the essence of the formula that doesn't change
-        // then we call getHashCode 
+        // get the ascii representation of 
         foreach (string i in _formula)
         {
-            if (!IsVariable(i))
+            if (IsNumber(i))
             {
-                noVariableFormula = "" + noVariableFormula + i;
+                hashCode = hashCode + double.Parse(i);
             }
+            for(int x = 0; x < i.Length; x++)
+            {
+                hashCode = hashCode+"" + (int)i[x];
+            }
+            
         }
 
         //TODO: does this make an infinite recursive loop? Why or why not
-        return noVariableFormula.GetHashCode();
+        return hashCode.GetHashCode();
     }
 
     /// <summary>
