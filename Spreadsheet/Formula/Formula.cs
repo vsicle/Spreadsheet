@@ -3,8 +3,11 @@
 // do anything else!
 // Last updated: August 2023 (small tweak to API)
 
+using System;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace SpreadsheetUtilities;
 
@@ -67,7 +70,7 @@ public class Formula
     /// </summary>
     public Formula(string formula, Func<string, string> normalize, Func<string, bool> isValid)
     {
-        // Create a list to store tokens.
+        // Create a list to store tokens
         List<string> tokenList = new List<string>();
 
         // Break the input formula into tokens and process them one by one.
@@ -87,7 +90,7 @@ public class Formula
                     throw new FormulaFormatException(String.Format("Illegal variable '{0}'. {1}", normalized_token, e));
                 }
 
-                // Check that the toekn is valid, using the supplied validator.
+                // Check that the token is valid, using the supplied validator.
                 if (!isValid(normalized_token))
                 {
                     throw new FormulaFormatException(String.Format("Invalid variable '{0}'.", normalized_token));
@@ -221,7 +224,160 @@ public class Formula
     /// </summary>
     public object Evaluate(Func<string, double> lookup)
     {
-        return "";
+        // Create a list to store tokens.
+        List<string> tokens = new List<string>();
+
+        // create stacks needed for operations
+        Stack<int> valueStack = new Stack<int>();
+        Stack<char> action = new Stack<char>();
+
+        // Evaluate all variables using lookup().
+        foreach (var token in _formula)
+        {
+            if (IsVariable(token))
+            {
+                // Evaluate variables.
+                try
+                {
+                    var value = lookup(token);
+                    tokens.Add(value.ToString());
+                }
+                catch (ArgumentException)
+                {
+                    // Return FormulaError when lookup() fails to find a variable.
+                    return new FormulaError(String.Format("Undefined variable '{0}'.", token));
+                }
+                catch (Exception e)
+                {
+                    // Return FormulaError if lookup() throws any other exception.
+                    return new FormulaError(String.Format("Unhandled exception while looking up variable '{0}'.", token));
+                }
+            }
+            else
+            {
+                // Use numers and operators as is.
+                tokens.Add(token);
+            }
+
+            
+
+            // go through every token
+            foreach (string tok in tokens)
+            {
+
+                // if token is a number, go in
+                if (IsNumber(tok))
+                {
+                    // if there is an operator in the action stack, check if its multiply or divide
+                    if (action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
+                    {
+
+                        // there is an operator present, see if its multiply or divide, if so, do that operation
+                        valueStack.Push(DoOperation(valueStack.Pop(), Int32.Parse(tok), action.Pop()));
+
+                    }
+                    else
+                    {
+                        // if there isn't an operator, push the valueStack into the stack
+                        valueStack.Push(Int32.Parse(tok));
+                    }
+                }
+                else
+                {
+                    // token is DEFINITELY an operator at this point
+
+                    char symbol = tok[0];
+
+                    switch (symbol)
+                    {
+                        case '+':
+                        case '-':
+                            // if there is something in top of actions aka operators stack
+
+                            if (action.TryPeek(out char tempOperator) && tempOperator == '+' || tempOperator == '-')
+                            {
+                                // do that operation
+                                valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+                            }
+                            // push the symbol into action stack
+                            action.Push(symbol);
+                            break;
+                        // all 3 of these do the same thing
+                        case '*':
+                        case '/':
+                        case '(':
+                            action.Push(symbol);
+                            break;
+                        case ')':
+
+                            // check what is at the top of action stack, proceed accordingly
+                            if (action.TryPeek(out char tempOp))
+                            {
+                                if (tempOp == '+')
+                                {
+                                    // do the addition
+
+                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+
+                                }
+                                else if (tempOp == '-')
+                                {
+                                    // do the subtraction
+                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+
+                                }
+
+                                // if the opening parenthesis is found as expected, pop it
+                                // if not, throw exception
+                                if (action.TryPeek(out char temp) && temp == '(')
+                                {
+                                    action.Pop();
+                                }
+                                else
+                                {
+                                    throw new ArgumentException("Missing ( in expression");
+                                }
+                            }
+
+                            // check if theres any multiplication or division, if so do it
+                            if (action.TryPeek(out char tempA))
+                            {
+                                if (tempA == '*')
+                                {
+                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+                                }
+                                else if (tempA == '/')
+                                {
+                                    valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
+                                }
+                            }
+
+                            break;
+                    }
+                }
+
+            }
+        }
+        // Last token has been processed
+        // if action stack is empty then result should be the only valueStack in valueStack stack
+        // if this is untrue, throw exception
+        if (action.Count == 0 && valueStack.Count != 0)
+        {
+            int result = valueStack.Pop();
+            if (valueStack.Count != 0)
+            {
+                throw new InvalidOperationException("Something went wrong");
+            }
+            else
+            {
+                return result;
+            }
+        }
+
+        // If operator stack is not empty
+        // Assume there is one operator and two values
+        return DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop());
+
     }
 
     /// <summary>
@@ -346,6 +502,37 @@ public class Formula
         }
         return hash.ToHashCode();
     }
+
+
+    /// <summary>
+    /// Helper method that will complete addition, subtraction, multiplication, or division.
+    /// Accounting for division by zero
+    /// </summary>
+    /// <param name="num2"></param> second number in operation
+    /// <param name="num1"></param> first number in operation
+    /// <param name="op"></param> the operator character
+    /// <returns></returns> result of the operation being done
+    /// <exception cref="Exception"></exception> thrown for division by zero or invalid operator being passed in (unlikely)
+    private static int DoOperation(int num2, int num1, char op)
+    {
+        switch (op)
+        {
+            case '+':
+                return num1 + num2;
+            case '-':
+                return num1 - num2;
+            case '*':
+                return num1 * num2;
+            case '/':
+                if (num1 == 0)
+                {
+                    throw new ArgumentException("Division by zero error");
+                }
+                return num2 / num1;
+        }
+        return Int32.MaxValue;
+    }
+
 
     /// <summary>
     /// Given an expression, enumerates the tokenList that compose it.  Tokens are left paren;
