@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace FormulaTester
 {
     [TestClass]
-    public class FormulaTests
+    public class FormulaTester
     {
 
         [TestMethod]
@@ -356,7 +356,7 @@ namespace FormulaTester
             res = new Formula("x+7", N, s => true).Evaluate(L);
             Debug.Assert((res is double) && ((double)res == 11.0));
 
-            res = new Formula("x+7").Evaluate(L); 
+            res = new Formula("x+7").Evaluate(L);
             Debug.Assert((res is double) && ((double)res == 9.0));
 
         }
