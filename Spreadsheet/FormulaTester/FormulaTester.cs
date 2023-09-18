@@ -21,6 +21,8 @@ namespace FormulaTester
             Func<string, string> N = str => str.ToUpper();
             // a method that returns true only if a string consists of one letter followed by one digit
             Func<string, bool> V = str => Regex.IsMatch(str, @"^[a-zA-Z][0-9]$");
+            // a super bad normalizer, to trigger exception
+            Func<string, string> bad = str => str = "!!!"+str+"!!";
 
             new Formula("x2+y3", N, V);  // should succeed
             try
@@ -207,12 +209,16 @@ namespace FormulaTester
                 // Expected.
             }
 
-            //new Formula("x+7", N, s => true).Evaluate(L);  // is 11
-            //new Formula("x+7").Evaluate(L);  // is 9
-
-            //new Formula("x+y*z", N, s => true).GetVariables();  // should enumerate "X", "Y", and "Z"
-            //new Formula("x+X*z", N, s => true).GetVariables();  // should enumerate "X" and "Z".
-            //new Formula("x+X*z").GetVariables();  // should enumerate "x", "X", and "z".
+            // poor normalizer, should trigger exception
+            try
+            {
+                new Formula("x2+5", bad, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
 
             Debug.Assert(new Formula("x + y", N, s => true).ToString() == "X+Y");  // should return "X+Y"
             Debug.Assert(new Formula("x + Y").ToString() == "x+Y");  // should return "x+Y"

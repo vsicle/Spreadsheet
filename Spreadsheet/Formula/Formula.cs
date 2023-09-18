@@ -82,14 +82,9 @@ public class Formula
             if (IsVariable(token))
             {
                 // Normalize the token, using the supplied normalizer.
-                try
-                {
-                    normalized_token = normalize(token);
-                }
-                catch (Exception e)
-                {
-                    throw new FormulaFormatException(String.Format("Illegal variable '{0}'. {1}", normalized_token, e));
-                }
+
+                normalized_token = normalize(token);
+
 
                 // Check that the token is valid, using the supplied validator.
                 if (!isValid(normalized_token))
@@ -350,19 +345,6 @@ public class Formula
                             }
                         }
 
-                        // check if theres any multiplication or division, if so do it
-                        if (action.TryPeek(out char tempA))
-                        {
-                            if (tempA == '*')
-                            {
-                                valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
-                            }
-                            else if (tempA == '/')
-                            {
-                                valueStack.Push(DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop()));
-                            }
-                        }
-
                         break;
                 }
             }
@@ -372,15 +354,9 @@ public class Formula
         // if this is untrue, throw exception
         if (action.Count == 0 && valueStack.Count != 0)
         {
-            double result = valueStack.Pop();
-            if (valueStack.Count != 0)
-            {
-                throw new InvalidOperationException("Something went wrong");
-            }
-            else
-            {
-                return result;
-            }
+
+            return valueStack.Pop();
+
         }
 
         // If operator stack is not empty
@@ -532,14 +508,16 @@ public class Formula
                 return num1 - num2;
             case '*':
                 return num1 * num2;
-            case '/':
-                if (num1 == 0)
-                {
-                    throw new ArgumentException("Division by zero error");
-                }
-                return num2 / num1;
         }
-        return Double.MaxValue;
+
+        // it is division at this point, keeps compiler happy to always have a return 
+        // outside of switch case
+        if (num1 == 0)
+        {
+            throw new ArgumentException("Division by zero error");
+        }
+        return num2 / num1;
+
     }
 
 
