@@ -42,6 +42,171 @@ namespace FormulaTester
                 // Expected.
             }
 
+            try
+            {
+                new Formula("+y3", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            try
+            {
+                new Formula("3+", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            try
+            {
+                new Formula("", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            try
+            {
+                new Formula("    ", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            //Invalid token following (
+            try
+            {
+                new Formula("2+5*(+3)", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+
+            // Number, variable, close parenthesis must be followed by operator or close parenthesis
+            try
+            {
+                new Formula("2 2+4", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // Number, variable, close parenthesis must be followed by operator or close parenthesis
+            try
+            {
+                new Formula("x2 2+4", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // Number, variable, close parenthesis must be followed by operator or close parenthesis
+            try
+            {
+                new Formula("(4*5)2", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // Extra parenthesis check
+            try
+            {
+                new Formula("4+8+(4*5))", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // Extra parenthesis check
+            try
+            {
+                new Formula("((2+2)))", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // Extra parenthesis check
+            try
+            {
+                new Formula("((1+3)", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // any token following an opening parenthesis or an operator must be either
+            // a number, a variable, or an opening parenthesis
+            try
+            {
+                new Formula("()+2+5", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // any token following an opening parenthesis or an operator must be either
+            // a number, a variable, or an opening parenthesis
+            try
+            {
+                new Formula("(-7", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // any token following an opening parenthesis or an operator must be either
+            // a number, a variable, or an opening parenthesis
+            try
+            {
+                new Formula("2++5", N, V);
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
+            // Invalid token in formula
+            try
+            {
+                new Formula("2$5");
+                Debug.Assert(false);
+            }
+            catch (FormulaFormatException)
+            {
+                // Expected.
+            }
+
             //new Formula("x+7", N, s => true).Evaluate(L);  // is 11
             //new Formula("x+7").Evaluate(L);  // is 9
 
@@ -164,15 +329,33 @@ namespace FormulaTester
             // a method that returns true only if a string consists of one letter followed by one digit
             Func<string, bool> V = str => Regex.IsMatch(str, @"^[a-zA-Z][0-9]$");
 
+            object res;
+            res = new Formula("1+1+1").Evaluate(L);
+            Debug.Assert((res is double) && ((double)res == 3.0));
 
-            //new Formula("x+7", N, s => true).Evaluate(L);  // is 11
-            //new Formula("x+7").Evaluate(L);  // is 9
+            res = new Formula("2+3*5+(3+4*8)*5+2").Evaluate(L);
+            Debug.Assert((res is double) && ((double)res == 194.0));
 
-            Formula a = new Formula("1+1");
-            Debug.Assert(Convert.ToDouble(a.Evaluate(L)) == 2.0);
+            res = new Formula("1/2").Evaluate(L);
+            Debug.Assert((res is double) && ((double)res == 0.5));
 
-            Debug.Assert(Convert.ToDouble(new Formula("2+3*5+(3+4*8)*5+2").Evaluate(L)) == 194);
+            res = new Formula("4-5-3-1.2").Evaluate(L);
+            Debug.Assert((res is double) && ((double)res == -5.2));
 
+            res = new Formula("(2-3)-1").Evaluate(L);
+            Debug.Assert((res is double) && ((double)res == -2));
+
+            res = new Formula("1+undefined").Evaluate(L);
+            Debug.Assert((res is FormulaError) && (((FormulaError)res).Reason == "Undefined variable 'undefined'."));
+
+            res = new Formula("1/0").Evaluate(L);
+            Debug.Assert((res is FormulaError) && (((FormulaError)res).Reason == "Division by zero."));
+
+            res = new Formula("x+7", N, s => true).Evaluate(L);
+            Debug.Assert((res is double) && ((double)res == 11.0));
+
+            res = new Formula("x+7").Evaluate(L); 
+            Debug.Assert((res is double) && ((double)res == 9.0));
 
         }
 

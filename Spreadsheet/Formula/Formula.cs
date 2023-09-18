@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Collections.Specialized.BitVector32;
+using System.Diagnostics;
 
 namespace SpreadsheetUtilities;
 
@@ -119,7 +120,7 @@ public class Formula
         }
 
         // first and last item have already been checked, check the rest against the rules
-        for (int i = 1; i < tokenList.Count - 1; i++)
+        for (int i = 0; i < tokenList.Count - 1; i++)
         {
             string token = tokenList[i];
 
@@ -132,10 +133,20 @@ public class Formula
                     // Check for following valid token
                     if (!(IsNumber(tokenList[i + 1]) || IsVariable(tokenList[i + 1]) || tokenList[i + 1] == "("))
                         throw new FormulaFormatException("Invalid token following '('.");
+
+
+
                 }
                 else if (token == ")")
                 {
                     closeParenthesesCount++;
+                    if (!IsOperator(tokenList[i + 1]) && !tokenList[i + 1].Equals(")"))
+                    {
+                        throw new FormulaFormatException("Any token that immediately follows a number, a variable, " +
+                                                            "or a closing parenthesis must be either an operator or " +
+                                                            "a closing parenthesis");
+
+                    }
                 }
                 // Extra Following rule check.
                 // If its a number, variable, or close paren. the next thing must be an operator or close paren.
@@ -149,7 +160,6 @@ public class Formula
 
                     }
                 }
-                //TODO Add if statement for operator following rule
                 // any token following an opening parenthesis or an operator must be either
                 // a number, a variable, or an opening parenthesis
                 else if (token.Equals("(") || IsOperator(token))
@@ -162,10 +172,15 @@ public class Formula
 
                 }
             }
-            else
-            {
-                throw new FormulaFormatException("Invalid token in formula.");
-            }
+            // had an else here but it was dead code
+            // all invalid items are caught by the look ahead test
+            // that checks if the item following a value/variable is an operator
+        }
+
+        // Account for edge case where extra parenthesis is last token
+        if (tokenList[tokenList.Count - 1] == ")")
+        {
+            closeParenthesesCount++;
         }
 
         if (openParenthesesCount != closeParenthesesCount)
@@ -185,7 +200,7 @@ public class Formula
 
     private static bool IsOperator(string token)
     {
-        return token.Equals("+") || token.Equals("-") || token.Equals("*") || token.Equals("/");
+        return token == "+" || token == "-" || token == "*" || token == "/" || token == "(" || token == ")";
     }
 
     /// <summary>
@@ -228,7 +243,7 @@ public class Formula
         List<string> tokens = new List<string>();
 
         // create stacks needed for operations
-        Stack<int> valueStack = new Stack<int>();
+        Stack<double> valueStack = new Stack<double>();
         Stack<char> action = new Stack<char>();
 
         // Evaluate all variables using lookup().
@@ -247,19 +262,13 @@ public class Formula
                     // Return FormulaError when lookup() fails to find a variable.
                     return new FormulaError(String.Format("Undefined variable '{0}'.", token));
                 }
-                catch (Exception e)
-                {
-                    // Return FormulaError if lookup() throws any other exception.
-                    return new FormulaError(String.Format("Unhandled exception while looking up variable '{0}'.", token));
-                }
             }
             else
             {
-                // Use numers and operators as is.
+                // Use numbers and operators as is.
                 tokens.Add(token);
             }
         }
-
 
         // go through every token
         foreach (string tok in tokens)
@@ -271,15 +280,21 @@ public class Formula
                 // if there is an operator in the action stack, check if its multiply or divide
                 if (action.TryPeek(out char tempOperator) && tempOperator == '*' || tempOperator == '/')
                 {
-
-                    // there is an operator present, see if its multiply or divide, if so, do that operation
-                    valueStack.Push(DoOperation(valueStack.Pop(), Int32.Parse(tok), action.Pop()));
+                    try
+                    {
+                        // there is an operator present, see if its multiply or divide, if so, do that operation
+                        valueStack.Push(DoOperation(valueStack.Pop(), double.Parse(tok), action.Pop()));
+                    }
+                    catch (ArgumentException)
+                    {
+                        return new FormulaError("Division by zero.");
+                    }
 
                 }
                 else
                 {
                     // if there isn't an operator, push the valueStack into the stack
-                    valueStack.Push(Int32.Parse(tok));
+                    valueStack.Push(double.Parse(tok));
                 }
             }
             else
@@ -333,10 +348,6 @@ public class Formula
                             {
                                 action.Pop();
                             }
-                            else
-                            {
-                                throw new ArgumentException("Missing ( in expression");
-                            }
                         }
 
                         // check if theres any multiplication or division, if so do it
@@ -355,15 +366,13 @@ public class Formula
                         break;
                 }
             }
-
         }
-
         // Last token has been processed
         // if action stack is empty then result should be the only valueStack in valueStack stack
         // if this is untrue, throw exception
         if (action.Count == 0 && valueStack.Count != 0)
         {
-            int result = valueStack.Pop();
+            double result = valueStack.Pop();
             if (valueStack.Count != 0)
             {
                 throw new InvalidOperationException("Something went wrong");
@@ -376,14 +385,7 @@ public class Formula
 
         // If operator stack is not empty
         // Assume there is one operator and two values
-        if (action.Count == 1 && valueStack.Count == 2)
-        {
-            return DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop());
-        }
-        else
-        {
-            return new FormulaError("Something went wrong, logic of evaluate failed");
-        }
+        return DoOperation(valueStack.Pop(), valueStack.Pop(), action.Pop());
 
     }
 
@@ -405,7 +407,7 @@ public class Formula
 
         foreach (string i in _formula)
         {
-            if (IsVariable(i))
+            if (IsVariable(i) && !result.Contains(i))
             {
                 result.Add(i);
             }
@@ -520,7 +522,7 @@ public class Formula
     /// <param name="op"></param> the operator character
     /// <returns></returns> result of the operation being done
     /// <exception cref="Exception"></exception> thrown for division by zero or invalid operator being passed in (unlikely)
-    private static int DoOperation(int num2, int num1, char op)
+    private static double DoOperation(double num2, double num1, char op)
     {
         switch (op)
         {
@@ -537,7 +539,7 @@ public class Formula
                 }
                 return num2 / num1;
         }
-        return Int32.MaxValue;
+        return Double.MaxValue;
     }
 
 
