@@ -97,10 +97,11 @@ public class Formula
             tokenList.Add(normalized_token);
         }
 
-
+        // start counter of parenthesis
         int openParenthesesCount = 0;
         int closeParenthesesCount = 0;
 
+        // check length, make sure the first and last tokens are valid
         if (tokenList.Count == 0)
         {
             throw new FormulaFormatException("Cannot have an empty formula");
@@ -114,7 +115,7 @@ public class Formula
             throw new FormulaFormatException("Invalid last token, must be number, variable, or closing parenthesis");
         }
 
-        // first and last item have already been checked, check the rest against the rules
+        // check the rest of the rules for each character
         for (int i = 0; i < tokenList.Count - 1; i++)
         {
             string token = tokenList[i];
@@ -135,6 +136,7 @@ public class Formula
                 else if (token == ")")
                 {
                     closeParenthesesCount++;
+                    // duplicate if statement to make counting the closed parenthsis easier
                     if (!IsOperator(tokenList[i + 1]) && !tokenList[i + 1].Equals(")"))
                     {
                         throw new FormulaFormatException("Any token that immediately follows a number, a variable, " +
@@ -178,21 +180,33 @@ public class Formula
             closeParenthesesCount++;
         }
 
+        // if # of ( and # of ) are not equal throw FormulaFormatException
         if (openParenthesesCount != closeParenthesesCount)
         {
             throw new FormulaFormatException("Open parenthesis count != close parenthesis count. Extra or missing parenthesis");
         }
 
+        // save the formula in the form of a list of tokens
         _formula = tokenList;
 
 
     }
 
+    /// <summary>
+    /// Checks if the token string is a double number
+    /// </summary>
+    /// <param name="token"> string token that is being checked </param>
+    /// <returns> boolean of whether token is a double or not</returns>
     private static bool IsNumber(string token)
     {
         return double.TryParse(token, out _);
     }
 
+    /// <summary>
+    /// Checks if the string token is a valid operator
+    /// </summary>
+    /// <param name="token">string token that is being checked against valid operators</param>
+    /// <returns>boolean of whether or not the token is a valid operator </returns>
     private static bool IsOperator(string token)
     {
         return token == "+" || token == "-" || token == "*" || token == "/" || token == "(" || token == ")";
@@ -202,7 +216,7 @@ public class Formula
     /// Helper method do decide if the input string is a valid variable
     /// </summary>
     /// <param name="str">input string that is being validated for proper variable format</param> 
-    /// <returns>bool whether the string is a valid variable format</returns> 
+    /// <returns>boolean whether the string is a valid variable format</returns> 
     private static bool IsVariable(string str)
     {
 
@@ -354,9 +368,7 @@ public class Formula
         // if this is untrue, throw exception
         if (action.Count == 0 && valueStack.Count != 0)
         {
-
             return valueStack.Pop();
-
         }
 
         // If operator stack is not empty
@@ -378,9 +390,10 @@ public class Formula
     /// </summary>
     public IEnumerable<string> GetVariables()
     {
-
+        // make hashset for storing result since it doesn't allow duplicates
         HashSet<string> result = new HashSet<string>();
 
+        // add every variable, if its a duplicate it won't be added due to hashSet rules
         foreach (string i in _formula)
         {
             if (IsVariable(i) && !result.Contains(i))
@@ -388,6 +401,7 @@ public class Formula
                 result.Add(i);
             }
         }
+        // return the hashSet
         return result;
 
     }
@@ -430,20 +444,21 @@ public class Formula
     /// </summary>
     public override bool Equals(object? obj)
     {
-
+        // check for null
         if (obj == null)
         {
             return false;
         }
+        // check for same type
         else if (obj.GetType() != this.GetType())
         {
             return false;
         }
+        // obj is not null and is a Formula, compare by hashCode
         else
         {
             return this.GetHashCode() == obj.GetHashCode();
         }
-
     }
 
 
@@ -473,18 +488,24 @@ public class Formula
     /// </summary>
     public override int GetHashCode()
     {
+        // start a hash
         System.HashCode hash = new System.HashCode();
+
+        // add every token into the hash
         foreach (string token in _formula)
         {
+            // if its not a number get its hashcode and add it to the big hash
             if (!IsNumber(token))
             {
                 hash.Add(token.GetHashCode());
             }
+            // for numbers, parse as double before hashing to make 2.0 == 2.0000
             else
             {
                 hash.Add(double.Parse(token.ToString()).GetHashCode());
             }
         }
+        // return the big hash
         return hash.ToHashCode();
     }
 
@@ -500,6 +521,7 @@ public class Formula
     /// <exception cref="Exception"></exception> thrown for division by zero or invalid operator being passed in (unlikely)
     private static double DoOperation(double num2, double num1, char op)
     {
+        // switch case with the operator
         switch (op)
         {
             case '+':
