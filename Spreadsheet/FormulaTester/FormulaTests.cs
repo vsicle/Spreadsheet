@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace FormulaTester
 {
     [TestClass]
-    public class FormulaTester
+    public class FormulaTests
     {
 
         [TestMethod]
