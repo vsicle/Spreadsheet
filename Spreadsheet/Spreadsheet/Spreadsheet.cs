@@ -1,5 +1,7 @@
 ﻿using SpreadsheetUtilities;
 using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SS
 {
@@ -124,7 +126,71 @@ namespace SS
         /// </summary>
         public override IList<string> SetCellContents(string name, double number)
         {
-            throw new NotImplementedException();
+            if (!IsValidName(name))
+            {
+                throw new InvalidNameException();
+            }
+            else if (!cells.ContainsKey(name))
+            {
+                cells.Add(name, new Cell(number));
+            }
+            else
+            {
+                // if prev content was a formula remove name from their dependencies
+                if (cells[name].contents is Formula)
+                {
+                    // make temp holder for Fomula to get its variables
+                    Formula tempFormula = (Formula)cells[name].contents;
+
+                    // this cell no longer depends on the variables of the formula that was in it
+                    foreach (string variable in tempFormula.GetVariables())
+                    {
+                        dependencyGraph.RemoveDependency(variable, name);
+                    }
+
+                }
+
+                // change the contents of the cell after doing check for it being a formula
+                cells[name].contents = number;
+
+            }
+
+            return FindAllDependents(name);
+
+        }
+
+        /// <summary>
+        /// Recursively finds all direct and indirect dependents of the specified cell.
+        /// </summary>
+        private List<string> FindAllDependents(string name)
+        {
+            List<string> allDependents = new List<string>();
+            HashSet<string> visited = new HashSet<string>();
+
+            // Start DFS traversal
+            Visit(name, visited, allDependents);
+
+            return allDependents;
+        }
+
+        /// <summary>
+        /// Helper method for DFS traversal to find dependents.
+        /// </summary>
+        private void Visit(string cell, HashSet<string> visited, List<string> allDependents)
+        {
+            visited.Add(cell);
+
+            // Add all direct dependents to the result list
+            foreach (string dependent in dependencyGraph.GetDependents(cell))
+            {
+                allDependents.Add(dependent);
+
+                // Continue DFS for unvisited dependents
+                if (!visited.Contains(dependent))
+                {
+                    Visit(dependent, visited, allDependents);
+                }
+            }
         }
 
         /// <summary>
@@ -139,7 +205,37 @@ namespace SS
         /// </summary>
         public override IList<string> SetCellContents(string name, string text)
         {
-            throw new NotImplementedException();
+            if (!IsValidName(name))
+            {
+                throw new InvalidNameException();
+            }
+            else if (!cells.ContainsKey(name))
+            {
+                cells.Add(name, new Cell(text));
+            }
+            else
+            {
+                // if prev content was a formula remove name from their dependencies
+                if (cells[name].contents is Formula)
+                {
+                    // make temp holder for Fomula to get its variables
+                    Formula tempFormula = (Formula)cells[name].contents;
+
+                    // this cell no longer depends on the variables of the formula that was in it
+                    foreach (string variable in tempFormula.GetVariables())
+                    {
+                        dependencyGraph.RemoveDependency(variable, name);
+                    }
+
+                }
+
+                // change the contents of the cell after doing check for it being a formula
+                cells[name].contents = text;
+
+            }
+
+            return FindAllDependents(name);
+
         }
 
         /// <summary>
@@ -157,7 +253,25 @@ namespace SS
         /// </summary>
         public override IList<string> SetCellContents(string name, Formula formula)
         {
-            throw new NotImplementedException();
+            if (!IsValidName(name))
+            {
+                throw new InvalidNameException();
+            }
+            else if (!cells.ContainsKey(name))
+            {
+                //TODO figure out lookup function
+                cells.Add(name, new Cell(formula, null));
+            }
+
+            // get every variable in the formula, add dependencies such that 
+            // "We" (name) depend on those variables, since they are in a formula, in "our" cell
+            foreach (string variable in formula.GetVariables())
+            {
+                dependencyGraph.AddDependency(variable, name);
+            }
+
+            return FindAllDependents(name);
+
         }
 
         /// <summary>
@@ -175,7 +289,7 @@ namespace SS
         /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
-            throw new NotImplementedException();
+            return dependencyGraph.GetDependents(name);
         }
 
         /// <summary>
