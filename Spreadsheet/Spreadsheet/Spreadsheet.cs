@@ -300,10 +300,6 @@ namespace SS
             public object contents { get; set; } // contents of the cell
             private Func<string, double> lookup;
 
-            public Cell()
-            {
-                contents = "";
-            }
 
             public Cell(double number)
             {
