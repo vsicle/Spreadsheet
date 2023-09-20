@@ -292,31 +292,67 @@ namespace SS
             return dependencyGraph.GetDependents(name);
         }
 
+        private double Lookup(string name)
+        {
+            if (cells.ContainsKey(name))
+            {
+                // if value is a number, return it, otherwise there is an issue
+                if (cells[name].value is double)
+                {
+                    return (double)cells[name].value;
+                }
+                else
+                {
+                    throw new FormulaFormatException("You have a variable that leads to a string being used inside of a formula," +
+                                                        " number or other formula must be used");
+                }
+            }
+            else
+            {
+                throw new FormulaFormatException("You have a variable that leads to a blank cell being used inside of a formula," +
+                                                        " number or other formula must be used");
+            }
+        }
+
         /// <summary>
         /// Cell class for private use only, representation of a single cell in excel 
         /// </summary>
         private class Cell
         {
             public object contents { get; set; } // contents of the cell
-            private Func<string, double> lookup;
+            public object value { get; set; } // contents of the cell
 
 
             public Cell(double number)
             {
                 contents = number;
+                value = number;
             }
 
             public Cell(string text)
             {
                 contents = text;
+                value = text;
             }
 
-            public Cell(Formula formula, Func<string, double> _lookup)
+            public Cell(Formula formula)
             {
                 contents = formula;
-                lookup = _lookup;
+                value = Recalculate();
+            }
+
+            public void Recalculate()
+            {
+                value = Calculate();
+            }
+
+            private double Calculate()
+            {
+                return (Formula)contents.;
             }
 
         }
+
+        
     }
 }
