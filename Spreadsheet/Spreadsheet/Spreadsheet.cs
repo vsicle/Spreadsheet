@@ -155,43 +155,11 @@ namespace SS
 
             }
 
-            return FindAllDependents(name);
+            List<string> dependentCells = GetCellsToRecalculate(name).ToList();
+            return dependentCells;
 
         }
 
-        /// <summary>
-        /// Recursively finds all direct and indirect dependents of the specified cell.
-        /// </summary>
-        private List<string> FindAllDependents(string name)
-        {
-            List<string> allDependents = new List<string>();
-            HashSet<string> visited = new HashSet<string>();
-
-            // Start DFS traversal
-            Visit(name, visited, allDependents);
-
-            return allDependents;
-        }
-
-        /// <summary>
-        /// Helper method for DFS traversal to find dependents.
-        /// </summary>
-        private void Visit(string cell, HashSet<string> visited, List<string> allDependents)
-        {
-            visited.Add(cell);
-
-            // Add all direct dependents to the result list
-            foreach (string dependent in dependencyGraph.GetDependents(cell))
-            {
-                allDependents.Add(dependent);
-
-                // Continue DFS for unvisited dependents
-                if (!visited.Contains(dependent))
-                {
-                    Visit(dependent, visited, allDependents);
-                }
-            }
-        }
 
         /// <summary>
         /// If name is invalid, throws an InvalidNameException.
@@ -234,7 +202,8 @@ namespace SS
 
             }
 
-            return FindAllDependents(name);
+            List<string> dependentCells = GetCellsToRecalculate(name).ToList();
+            return dependentCells;
 
         }
 
@@ -260,7 +229,7 @@ namespace SS
             else if (!cells.ContainsKey(name))
             {
                 //TODO figure out lookup function
-                cells.Add(name, new Cell(formula, null));
+                cells.Add(name, new Cell(formula));
             }
 
             // get every variable in the formula, add dependencies such that 
@@ -270,7 +239,8 @@ namespace SS
                 dependencyGraph.AddDependency(variable, name);
             }
 
-            return FindAllDependents(name);
+            List<string> dependentCells = GetCellsToRecalculate(name).ToList();
+            return dependentCells;
 
         }
 
@@ -292,67 +262,40 @@ namespace SS
             return dependencyGraph.GetDependents(name);
         }
 
-        private double Lookup(string name)
-        {
-            if (cells.ContainsKey(name))
-            {
-                // if value is a number, return it, otherwise there is an issue
-                if (cells[name].value is double)
-                {
-                    return (double)cells[name].value;
-                }
-                else
-                {
-                    throw new FormulaFormatException("You have a variable that leads to a string being used inside of a formula," +
-                                                        " number or other formula must be used");
-                }
-            }
-            else
-            {
-                throw new FormulaFormatException("You have a variable that leads to a blank cell being used inside of a formula," +
-                                                        " number or other formula must be used");
-            }
-        }
 
         /// <summary>
         /// Cell class for private use only, representation of a single cell in excel 
         /// </summary>
-        private class Cell
+        internal class Cell
         {
             public object contents { get; set; } // contents of the cell
-            public object value { get; set; } // contents of the cell
 
 
             public Cell(double number)
             {
                 contents = number;
-                value = number;
             }
 
             public Cell(string text)
             {
                 contents = text;
-                value = text;
             }
 
             public Cell(Formula formula)
             {
                 contents = formula;
-                value = Recalculate();
             }
 
-            public void Recalculate()
-            {
-                value = Calculate();
-            }
 
-            private double Calculate()
-            {
-                return (Formula)contents.;
-            }
 
         }
 
-        
+
+
+
     }
+
+
+
+
 }
