@@ -58,9 +58,7 @@ namespace SpreadsheetTest
             sp.SetCellContents("A4", new Formula("A3 + 1"));
             IEnumerable<string> result = sp.SetCellContents("Z1", 0);
             List<string> expected = new List<string>();
-            expected.Add("A2");
-            expected.Add("A3");
-            expected.Add("A4");
+            expected.Add("Z1");
 
             foreach (string name in result)
             {
@@ -84,6 +82,7 @@ namespace SpreadsheetTest
             var result = sp.SetCellContents("A1", 2);
             List<string> expected = new List<string>();
 
+            expected.Add("A1");
             expected.Add("A2");
             expected.Add("A4");
 
@@ -109,6 +108,7 @@ namespace SpreadsheetTest
             var result = sp.SetCellContents("A1", 2);
             List<string> expected = new List<string>();
 
+            expected.Add("A1");
             expected.Add("A2");
             expected.Add("A4");
 
