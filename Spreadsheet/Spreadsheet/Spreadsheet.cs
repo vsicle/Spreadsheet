@@ -48,6 +48,9 @@ namespace SS
     /// For example, suppose that A1 contains B1*2, B1 contains C1*2, and C1 contains A1*2.
     /// A1 depends on B1, which depends on C1, which depends on A1.  That's a circular
     /// dependency.
+    /// 
+    /// Modified and implemented by Vasil Vassilev
+    /// Latest Change made on 9/21/2023
     /// </summary>
     public class Spreadsheet : AbstractSpreadsheet
     {
@@ -70,14 +73,17 @@ namespace SS
         /// </summary>
         public override object GetCellContents(string name)
         {
+            // if name is valid and its cell is assigned, return its contents
             if (IsValidName(name) && cells.ContainsKey(name))
             {
                 return cells[name].contents;
             }
+            // if its a valid name, but hasn't been assigned return blank string
             else if (IsValidName(name))
             {
                 return "";
             }
+            // name is invalid if we get to this point
             else
             {
                 throw new InvalidNameException();
@@ -99,17 +105,20 @@ namespace SS
         /// </summary>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
+
             List<string> nonEmptyCellNames = new List<string>();
 
             // for every cell that has been "added/modified from base state"
             // if not null or empty add it
             foreach (string cellName in cells.Keys)
             {
+                // if a cell is not null or empty then add its name to the return list
                 if (!string.IsNullOrEmpty(cells[cellName].contents.ToString()))
                 {
                     nonEmptyCellNames.Add(cellName);
                 }
             }
+            // return the list
             return nonEmptyCellNames;
 
         }
@@ -126,15 +135,18 @@ namespace SS
         /// </summary>
         public override IList<string> SetCellContents(string name, double number)
         {
+            // check name validity
             if (!IsValidName(name))
             {
                 throw new InvalidNameException();
             }
+            // if cell hasn't been used before assign it directly
             else if (!cells.ContainsKey(name))
             {
                 cells.Add(name, new Cell(number));
             }
             else
+            // check what was in there before to update dependencies
             {
                 // if prev content was a formula remove name from their dependencies
                 if (cells[name].contents is Formula)
@@ -154,7 +166,7 @@ namespace SS
                 cells[name].contents = number;
 
             }
-
+            // Use pre-built method to find all cells dependent on "name", save as list, and return
             List<string> dependentCells = GetCellsToRecalculate(name).ToList();
             return dependentCells;
 
@@ -173,15 +185,18 @@ namespace SS
         /// </summary>
         public override IList<string> SetCellContents(string name, string text)
         {
+            // check or valid name
             if (!IsValidName(name))
             {
                 throw new InvalidNameException();
             }
+            // if cell hasn't been used before, assign it directly
             else if (!cells.ContainsKey(name))
             {
                 cells.Add(name, new Cell(text));
             }
             else
+            // if cell has been used before, update accordingly and update dependencies if needed
             {
                 // if prev content was a formula remove name from their dependencies
                 if (cells[name].contents is Formula)
@@ -201,7 +216,7 @@ namespace SS
                 cells[name].contents = text;
 
             }
-
+            // Use pre-built method to find all cells dependent on "name", save as list, and return
             List<string> dependentCells = GetCellsToRecalculate(name).ToList();
             return dependentCells;
 
@@ -222,13 +237,14 @@ namespace SS
         /// </summary>
         public override IList<string> SetCellContents(string name, Formula formula)
         {
+            // check or valid name
             if (!IsValidName(name))
             {
                 throw new InvalidNameException();
             }
+            // if cell hasn't been used before, assign it directly
             else if (!cells.ContainsKey(name))
             {
-                //TODO figure out lookup function
                 cells.Add(name, new Cell(formula));
             }
 
@@ -238,7 +254,7 @@ namespace SS
             {
                 dependencyGraph.AddDependency(variable, name);
             }
-
+            // Use pre-built method to find all cells dependent on "name", save as list, and return
             List<string> dependentCells = GetCellsToRecalculate(name).ToList();
             return dependentCells;
 
@@ -259,43 +275,46 @@ namespace SS
         /// </summary>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
+            // return all dependents (direct) in dependencyGraph of name
             return dependencyGraph.GetDependents(name);
         }
 
 
         /// <summary>
         /// Cell class for private use only, representation of a single cell in excel 
+        /// Contents should be a string, double, or Formula object
         /// </summary>
         internal class Cell
         {
             public object contents { get; set; } // contents of the cell
 
 
+            /// <summary>
+            /// Constructor for Cell containing a number
+            /// </summary>
+            /// <param name="number">double number to be contained in cell</param>
             public Cell(double number)
             {
                 contents = number;
             }
 
+            /// <summary>
+            /// Constructor for cell containing a string
+            /// </summary>
+            /// <param name="text">string text to be contained in cell</param>
             public Cell(string text)
             {
                 contents = text;
             }
 
+            /// <summary>
+            /// Constructor for cell containing a Formula object
+            /// </summary>
+            /// <param name="formula">Formula object to be contained in the cell</param>
             public Cell(Formula formula)
             {
                 contents = formula;
             }
-
-
-
         }
-
-
-
-
     }
-
-
-
-
 }

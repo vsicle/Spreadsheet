@@ -3,21 +3,28 @@ using SS;
 
 namespace SpreadsheetTest
 {
+    /// <summary>
+    /// Testing class for methods of Spreadsheet.cs 
+    /// </summary>
     [TestClass]
     public class SpreadsheetTest
     {
         [TestMethod]
         public void GetCellContents()
         {
+            // make spreadsheet and add contents
             Spreadsheet sp = new Spreadsheet();
             sp.SetCellContents("A1", 3);
             sp.SetCellContents("A2", new Formula("A1+A1"));
             sp.SetCellContents("A3", "text");
+            
+            //check that contents are what we expect
             Assert.AreEqual(new Formula("A1+A1"), sp.GetCellContents("A2")); // test with formula
             Assert.AreEqual(3, (double)sp.GetCellContents("A1"));   // test with double
             Assert.AreEqual("text", sp.GetCellContents("A3"));      // test with text
             Assert.AreEqual("", sp.GetCellContents("A5"));      // test with empty cell
 
+            // expect a exception to be thrown due to invalid name, if no exception is thrown test will fail
             try
             {
                 sp.GetCellContents("25");
@@ -32,34 +39,66 @@ namespace SpreadsheetTest
         [TestMethod]
         public void GetNamesofNonEmptyCells()
         {
+            // make non-empty cells
             Spreadsheet sp = new Spreadsheet();
             sp.SetCellContents("A1", 3);
             sp.SetCellContents("A2", new Formula("A1+A1"));
             sp.SetCellContents("A3", "text");
+            // call the method being tested
             IEnumerable<string> result = sp.GetNamesOfAllNonemptyCells();
-
+            int loopCount = 0;
+            // make sure the results are correct and nothing unexpected is returned
             foreach (string name in result)
             {
+                loopCount++;
                 if(!name.Equals("A1") && !name.Equals("A2") && !name.Equals("A3"))
                 {
                     Assert.IsTrue(false);
                 }
             }
+            // make sure three values were returned
+            Assert.AreEqual(3, loopCount);
             Assert.IsTrue(true);
         }
 
         [TestMethod]
         public void FindAllDependents()
         {
+            // make spreadsheet with no dependencies
             Spreadsheet sp = new Spreadsheet();
-            sp.SetCellContents("A1", 3);
-            sp.SetCellContents("A2", new Formula("A1+A1"));
-            sp.SetCellContents("A3", new Formula("A2 + 1"));
-            sp.SetCellContents("A4", new Formula("A3 + 1"));
+
+            // set a cell, it should return itself
             IEnumerable<string> result = sp.SetCellContents("Z1", 0);
+
+            // expected results
             List<string> expected = new List<string>();
             expected.Add("Z1");
 
+            foreach (string name in result)
+            {
+                if (!expected.Contains(name))
+                {
+                    Assert.IsTrue(false);
+                }
+            }
+            Assert.IsTrue(true);
+
+            sp.SetCellContents("A1", 0);
+            sp.SetCellContents("A2", new Formula("A1+1"));
+            sp.SetCellContents("A3", new Formula("A2+1"));
+            sp.SetCellContents("A4", new Formula("A3+1"));
+
+            // set a cell, it should return list of all dependents
+            result = sp.SetCellContents("A1", 1);
+
+            // expected results
+            expected = new List<string>();
+            expected.Add("A1");
+            expected.Add("A2");
+            expected.Add("A3");
+            expected.Add("A4");
+
+            // check each item in the dependents list against the expected return value
             foreach (string name in result)
             {
                 if (!expected.Contains(name))

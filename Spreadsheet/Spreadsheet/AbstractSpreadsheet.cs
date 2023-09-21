@@ -182,19 +182,27 @@ public abstract class AbstractSpreadsheet
     /// </summary>
     private void Visit(string start, string name, ISet<string> visited, LinkedList<string> changed)
     {
+        // update the list of visited dependents
         visited.Add(name);
+
+        // for every direct dependent of name
         foreach (string n in GetDirectDependents(name))
         {
+            // if the direct dependent is the starting value then we have a circular dependency, throw
             if (n.Equals(start))
             {
                 throw new CircularException();
             }
+            // if the dependent of name hasn't been visited, make recursive call to visit
             else if (!visited.Contains(n))
             {
                 Visit(start, n, visited, changed);
             }
         }
-        changed.AddFirst(name);
+        // add the name whos dependents we looked at to the changed set (the result of GetCellsToRecalculate())
+        // this adds to front since the bottom the the dependency chain will be the first one to be added,
+        // so addFirst makes the list backwards, so the top of the dependency chain is in the front of the list
+         changed.AddFirst(name);
     }
 
 }
