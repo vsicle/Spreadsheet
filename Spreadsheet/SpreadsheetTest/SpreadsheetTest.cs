@@ -17,7 +17,7 @@ namespace SpreadsheetTest
             sp.SetCellContents("A1", 3);
             sp.SetCellContents("A2", new Formula("A1+A1"));
             sp.SetCellContents("A3", "text");
-            
+
             //check that contents are what we expect
             Assert.AreEqual(new Formula("A1+A1"), sp.GetCellContents("A2")); // test with formula
             Assert.AreEqual(3, (double)sp.GetCellContents("A1"));   // test with double
@@ -51,7 +51,7 @@ namespace SpreadsheetTest
             foreach (string name in result)
             {
                 loopCount++;
-                if(!name.Equals("A1") && !name.Equals("A2") && !name.Equals("A3"))
+                if (!name.Equals("A1") && !name.Equals("A2") && !name.Equals("A3"))
                 {
                     Assert.IsTrue(false);
                 }
@@ -117,27 +117,37 @@ namespace SpreadsheetTest
             sp.SetCellContents("A2", new Formula("A1+A1"));
             sp.SetCellContents("A3", new Formula("A2 + 1"));
             sp.SetCellContents("A4", new Formula("A3 + A1"));
+
+            // make A3 not depend on anything
             sp.SetCellContents("A3", 4);
             var result = sp.SetCellContents("A1", 2);
-            List<string> expected = new List<string>();
 
+            // list of expected dependents that need to now be updated
+            List<string> expected = new List<string>();
             expected.Add("A1");
             expected.Add("A2");
             expected.Add("A4");
-
+            int resCount = 0;
+            // make sure all results are in IEnumerable
             foreach (string name in result)
             {
+                resCount++;
                 if (!expected.Contains(name))
                 {
                     Assert.IsTrue(false);
                 }
             }
+            Assert.AreEqual(3, resCount);
             Assert.IsTrue(true);
         }
+
 
         [TestMethod]
         public void AreDependentsUpdatingCorrectly2()
         {
+
+            // same as previous test, but with a string rather than a number
+
             Spreadsheet sp = new Spreadsheet();
             sp.SetCellContents("A1", 3);
             sp.SetCellContents("A2", new Formula("A1+A1"));
@@ -151,13 +161,18 @@ namespace SpreadsheetTest
             expected.Add("A2");
             expected.Add("A4");
 
+            int resCount = 0;
+
+            // check expected return values against returned values
             foreach (string name in result)
             {
+                resCount++;
                 if (!expected.Contains(name))
                 {
                     Assert.IsTrue(false);
                 }
             }
+            Assert.AreEqual(3, resCount);
             Assert.IsTrue(true);
         }
 
@@ -166,12 +181,13 @@ namespace SpreadsheetTest
         {
             Spreadsheet sp = new Spreadsheet();
 
+            // check lots of invalid names to make sure they are rejected
             try
             {
                 sp.SetCellContents("1", 1);
                 Assert.Fail();
             }
-            catch(InvalidNameException)
+            catch (InvalidNameException)
             {
                 Assert.IsTrue(true);
             }
@@ -199,7 +215,56 @@ namespace SpreadsheetTest
 
         }
 
-        
+        [TestMethod]
+        public void BlankCellResult()
+        {
+            Spreadsheet sp = new Spreadsheet();
 
+            Assert.AreEqual("", sp.GetCellContents("A1"));
+        }
+
+        [TestMethod]
+        public void CircularDependencies()
+        {
+            Spreadsheet sp = new Spreadsheet();
+            sp.SetCellContents("A1", new Formula("B2"));
+            try
+            {
+                sp.SetCellContents("B2", new Formula("A1"));
+                Assert.Fail();
+            }
+            catch(CircularException) 
+            {
+                
+            }
+        }
+
+        [TestMethod]
+        public void CaseSensitity()
+        {
+            var sp = new Spreadsheet();
+
+            sp.SetCellContents("A1", 1);
+            sp.SetCellContents("a1", 3);
+
+            Assert.AreEqual(1.0, sp.GetCellContents("A1"));
+            Assert.AreEqual(3.0, sp.GetCellContents("a1"));
+        }
+
+        [TestMethod]
+        public void InvalidFormula()
+        {
+            var sp = new Spreadsheet();
+
+            try
+            {
+                sp.SetCellContents("A1", new Formula("2x+1"));
+                Assert.Fail();
+            }
+            catch (FormulaFormatException)
+            {
+
+            }            
+        }
     }
 }
