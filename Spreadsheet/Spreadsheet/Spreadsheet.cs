@@ -1,5 +1,6 @@
 ﻿using SpreadsheetUtilities;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -133,7 +134,7 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// list {A1, B1, C1} is returned.
         /// </summary>
-        public override IList<string> SetCellContents(string name, double number)
+        protected override IList<string> SetCellContents(string name, double number)
         {
             // check name validity
             if (!IsValidName(name))
@@ -183,7 +184,7 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// list {A1, B1, C1} is returned.
         /// </summary>
-        public override IList<string> SetCellContents(string name, string text)
+        protected override IList<string> SetCellContents(string name, string text)
         {
             // check or valid name
             if (!IsValidName(name))
@@ -235,7 +236,7 @@ namespace SS
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
         /// list {A1, B1, C1} is returned.
         /// </summary>
-        public override IList<string> SetCellContents(string name, Formula formula)
+        protected override IList<string> SetCellContents(string name, Formula formula)
         {
             // check or valid name
             if (!IsValidName(name))
@@ -279,6 +280,43 @@ namespace SS
             return dependencyGraph.GetDependents(name);
         }
 
+        public override void Save(string filename)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object GetCellValue(string name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override IList<string> SetContentsOfCell(string name, string content)
+        {
+            throw new NotImplementedException();
+        }
+
+        private Func<string, double> Lookup()
+        {
+            if (cells.ContainsKey(name))
+            {
+                // if value is a number, return it, otherwise there is an issue
+                if (cells[name].value is double)
+                {
+                    return (double)cells[name].value;
+                }
+                else
+                {
+                    throw new FormulaFormatException("You have a variable that leads to a string being used inside of a formula," +
+                                                        " number or other formula must be used");
+                }
+            }
+            else
+            {
+                throw new FormulaFormatException("You have a variable that leads to a blank cell being used inside of a formula," +
+                                                        " number or other formula must be used");
+            }
+        }
+
 
         /// <summary>
         /// Cell class for private use only, representation of a single cell in excel 
@@ -287,7 +325,7 @@ namespace SS
         internal class Cell
         {
             public object contents { get; set; } // contents of the cell
-
+            public object value { get; set; } // value of the cell (Evalution of formula, value of variable, string, double)
 
             /// <summary>
             /// Constructor for Cell containing a number
@@ -296,6 +334,7 @@ namespace SS
             public Cell(double number)
             {
                 contents = number;
+                value = number;
             }
 
             /// <summary>
@@ -305,6 +344,7 @@ namespace SS
             public Cell(string text)
             {
                 contents = text;
+                value = text;
             }
 
             /// <summary>
@@ -314,7 +354,10 @@ namespace SS
             public Cell(Formula formula)
             {
                 contents = formula;
+                value = formula.Evaluate(Lookup());
             }
+
+            
         }
     }
 }
