@@ -248,6 +248,8 @@ namespace SS
 
         }
 
+
+        // IS THIS CLASS NEEDED SINCE CELL TAKES CARE OF FORMULA CREATION
         /// <summary>
         /// If name is invalid, throws an InvalidNameException.
         /// 
@@ -351,7 +353,17 @@ namespace SS
         /// </summary>
         public override object GetCellValue(string name)
         {
-            throw new NotImplementedException();
+            // check name for validity
+            if (!IsValidName(name))
+            {
+                throw new InvalidNameException();
+            }
+            // return the value of the cell (should be double, text, or FormulaError)
+            else
+            {
+                return cells[name].value;
+            }
+            
         }
 
         /// <summary>
@@ -443,14 +455,14 @@ namespace SS
                 {
                     // every formula is created with the Normalize and Validate Func provided by the user or the default
                     contents = new Formula(text[1..], Normalize, IsValid);
-                    
+
                 }
                 // content is not a formula
                 else
                 {
                     contents = text;
                     value = text;
-                } 
+                }
             }
         }
     }
