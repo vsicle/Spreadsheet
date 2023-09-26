@@ -57,15 +57,34 @@ namespace SS
     {
         private Dictionary<string, Cell> cells;
         private DependencyGraph dependencyGraph;
+        private delegate string Normalize(string variable);
+        private delegate double IsValid(string variable);
+        private Normalize norm;
+        private IsValid isValid;
+
+
         /// <summary>
         /// Zero argument constructor for making a blank spreadsheet
         /// </summary>
-        public Spreadsheet()
+        public Spreadsheet() : base("default")
         {
             cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
         }
 
+        public Spreadsheet(Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
+        {
+            cells = new Dictionary<string, Cell>();
+            dependencyGraph = new DependencyGraph();
+            norm = _normalize;
+
+        }
+
+        public Spreadsheet(string filePath, Func<string, string> normalize, Func<string, bool> isValid, string versionNum) : base(versionNum)
+        {
+            cells = new Dictionary<string, Cell>();
+            dependencyGraph = new DependencyGraph();
+        }
 
         /// <summary>
         /// If name is invalid, throws an InvalidNameException.
