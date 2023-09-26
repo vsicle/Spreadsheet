@@ -57,10 +57,9 @@ namespace SS
     {
         private Dictionary<string, Cell> cells;
         private DependencyGraph dependencyGraph;
-        private delegate string Normalize(string variable);
-        private delegate double IsValid(string variable);
-        private Normalize norm;
-        private IsValid isValid;
+
+        protected static Func<string, string> Normalize;
+        protected static Func<string, bool> IsValid;
 
 
         /// <summary>
@@ -70,20 +69,26 @@ namespace SS
         {
             cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
+            // default normalizer and IsValid function
+            Normalize = s => s;
+            IsValid = s => true;
         }
 
         public Spreadsheet(Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
         {
             cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
-            norm = _normalize;
+            Normalize = _normalize;
+            IsValid = _isValid;
 
         }
 
-        public Spreadsheet(string filePath, Func<string, string> normalize, Func<string, bool> isValid, string versionNum) : base(versionNum)
+        public Spreadsheet(string filePath, Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
         {
             cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
+            Normalize = _normalize;
+            IsValid = _isValid;
         }
 
         /// <summary>
@@ -300,16 +305,85 @@ namespace SS
             return dependencyGraph.GetDependents(name);
         }
 
+        /// <summary>
+        /// Writes the contents of this spreadsheet to the named file using a JSON format.
+        /// The JSON object should have the following fields:
+        /// "Version" - the version of the spreadsheet software (a string)
+        /// "Cells" - a data structure containing 0 or more cell entries
+        ///           Each cell entry has a field (or key) named after the cell itself 
+        ///           The value of that field is another object representing the cell's contents
+        ///               The contents object has a single field called "StringForm",
+        ///               representing the string form of the cell's contents
+        ///               - If the contents is a string, the value of StringForm is that string
+        ///               - If the contents is a double d, the value of StringForm is d.ToString()
+        ///               - If the contents is a Formula f, the value of StringForm is "=" + f.ToString()
+        /// 
+        /// For example, if this spreadsheet has a version of "default" 
+        /// and contains a cell "A1" with contents being the double 5.0 
+        /// and a cell "B3" with contents being the Formula("A1+2"), 
+        /// a JSON string produced by this method would be:
+        /// 
+        /// {
+        ///   "Cells": {
+        ///     "A1": {
+        ///       "StringForm": "5"
+        ///     },
+        ///     "B3": {
+        ///       "StringForm": "=A1+2"
+        ///     }
+        ///   },
+        ///   "Version": "default"
+        /// }
+        /// 
+        /// If there are any problems opening, writing, or closing the file, the method should throw a
+        /// SpreadsheetReadWriteException with an explanatory message.
+        /// </summary>
         public override void Save(string filename)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// If name is invalid, throws an InvalidNameException.
+        /// 
+        /// Otherwise, returns the value (as opposed to the contents) of the named cell.  The return
+        /// value should be either a string, a double, or a SpreadsheetUtilities.FormulaError.
+        /// </summary>
         public override object GetCellValue(string name)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// If name is invalid, throws an InvalidNameException.
+        /// 
+        /// Otherwise, if content parses as a double, the contents of the named
+        /// cell becomes that double.
+        /// 
+        /// Otherwise, if content begins with the character '=', an attempt is made
+        /// to parse the remainder of content into a Formula f using the Formula
+        /// constructor.  There are then three possibilities:
+        /// 
+        ///   (1) If the remainder of content cannot be parsed into a Formula, a 
+        ///       SpreadsheetUtilities.FormulaFormatException is thrown.
+        ///       
+        ///   (2) Otherwise, if changing the contents of the named cell to be f
+        ///       would cause a circular dependency, a CircularException is thrown,
+        ///       and no change is made to the spreadsheet.
+        ///       
+        ///   (3) Otherwise, the contents of the named cell becomes f.
+        /// 
+        /// Otherwise, the contents of the named cell becomes content.
+        /// 
+        /// If an exception is not thrown, the method returns a list consisting of
+        /// name plus the names of all other cells whose value depends, directly
+        /// or indirectly, on the named cell. The order of the list should be any
+        /// order such that if cells are re-evaluated in that order, their dependencies 
+        /// are satisfied by the time they are evaluated.
+        /// 
+        /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
+        /// list {A1, B1, C1} is returned.
+        /// </summary>
         public override IList<string> SetContentsOfCell(string name, string content)
         {
             throw new NotImplementedException();
@@ -357,27 +431,27 @@ namespace SS
                 value = number;
             }
 
+            // TODO: Change/Update comment
             /// <summary>
             /// Constructor for cell containing a string
             /// </summary>
             /// <param name="text">string text to be contained in cell</param>
             public Cell(string text)
             {
-                contents = text;
-                value = text;
+                // content starts with =, contents are a formula
+                if (text[0].Equals("="))
+                {
+                    // every formula is created with the Normalize and Validate Func provided by the user or the default
+                    contents = new Formula(text[1..], Normalize, IsValid);
+                    
+                }
+                // content is not a formula
+                else
+                {
+                    contents = text;
+                    value = text;
+                } 
             }
-
-            /// <summary>
-            /// Constructor for cell containing a Formula object
-            /// </summary>
-            /// <param name="formula">Formula object to be contained in the cell</param>
-            public Cell(Formula formula)
-            {
-                contents = formula;
-                value = formula.Evaluate(Lookup());
-            }
-
-            
         }
     }
 }
