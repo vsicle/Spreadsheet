@@ -57,7 +57,6 @@ namespace SS
     {
         private Dictionary<string, Cell> cells;
         private DependencyGraph dependencyGraph;
-
         protected static Func<string, string> Normalize;
         protected static Func<string, bool> IsValid;
 
@@ -74,6 +73,12 @@ namespace SS
             IsValid = s => true;
         }
 
+        /// <summary>
+        /// 3 argument constructor that takes a normalizer, validator, and versionIdentifier
+        /// </summary>
+        /// <param name="_normalize">normalizer function, input: string, output:string</param>
+        /// <param name="_isValid"></param>
+        /// <param name="versionNum"></param>
         public Spreadsheet(Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
         {
             cells = new Dictionary<string, Cell>();
