@@ -66,6 +66,7 @@ namespace SS
             dependencyGraph = new DependencyGraph();
         }
 
+
         /// <summary>
         /// If name is invalid, throws an InvalidNameException.
         /// 
@@ -295,7 +296,7 @@ namespace SS
             throw new NotImplementedException();
         }
 
-        private Func<string, double> Lookup()
+        private double Lookup(string name)
         {
             if (cells.ContainsKey(name))
             {
