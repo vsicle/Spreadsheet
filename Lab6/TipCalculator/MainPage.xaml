@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TipCalculator.MainPage">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Spacing="25"
+            Padding="30,0"
+            VerticalOptions="Center">
+
+            <!--<Image
+                Source="dotnet_bot.png"
+                SemanticProperties.Description="Cute dot net bot waving hi to you!"
+                HeightRequest="200"
+                HorizontalOptions="Center" />
+
+            <Label
+                Text="Hello, World!"
+                SemanticProperties.HeadingLevel="Level1"
+                FontSize="32"
+                HorizontalOptions="Center" />-->
+
+            <Label 
+                Text="Enter Total Bill"
+                FontSize="18"
+                HorizontalOptions="Center"/>
+
+
+            <Entry x:Name="BillAmount"
+                Placeholder="Bill Amount goes here"
+                TextChanged="OnBillAmountChanged"
+               
+             />
+
+            <Entry x:Name="TipInput"
+                Placeholder="Tip amount goes here"
+                TextChanged="OnTipInputChanged"
+            />
+            
+            <Button
+                x:Name="FindTipBtn"
+                Text="Compute Tip"
+                SemanticProperties.Hint="Calculates Tip"
+                Clicked="OnCounterClicked"
+                HorizontalOptions="Center" />
+
+            <Entry x:Name="TipAmount"
+                Placeholder="Tip amount goes here"
+            />
+
+            <Entry x:Name="TotalAmount"
+                Placeholder="Total Amount"
+/>
+
+
+
+
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
