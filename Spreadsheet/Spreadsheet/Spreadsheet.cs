@@ -59,7 +59,7 @@ namespace SS
         private DependencyGraph dependencyGraph;
         protected static Func<string, string> Normalize;
         protected static Func<string, bool> IsValid;
-
+        protected static Func<string, double> LookupDel;
 
         /// <summary>
         /// Zero argument constructor for making a blank spreadsheet
@@ -71,6 +71,7 @@ namespace SS
             // default normalizer and IsValid function
             Normalize = s => s;
             IsValid = s => true;
+            LookupDel = Lookup;
         }
 
         /// <summary>
@@ -85,6 +86,7 @@ namespace SS
             dependencyGraph = new DependencyGraph();
             Normalize = _normalize;
             IsValid = _isValid;
+            LookupDel = Lookup;
 
         }
 
@@ -92,8 +94,16 @@ namespace SS
         {
             cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
-            Normalize = _normalize;
-            IsValid = _isValid;
+            if (_normalize != null && _isValid != null)
+            {
+                Normalize = _normalize;
+                IsValid = _isValid; 
+            }
+            else
+            {
+                
+            }
+            LookupDel = Lookup;
         }
 
         /// <summary>
@@ -416,7 +426,7 @@ namespace SS
             }
         }
 
-        private static double Lookup(string name, Dictionary<string, Cell> cells)
+        private double Lookup(string name)
         {
             if (cells.ContainsKey(name))
             {
@@ -445,7 +455,6 @@ namespace SS
         /// </summary>
         internal class Cell
         {
-            private Dictionary<string, Cell> cells;
             public object contents { get; set; } // contents of the cell
             public object value { get; set; } // value of the cell (Evalution of formula, value of variable, string, double)
 
@@ -453,9 +462,8 @@ namespace SS
             /// Constructor for Cell containing a number
             /// </summary>
             /// <param name="number">double number to be contained in cell</param>
-            public Cell(double number, Dictionary<string, Cell> _cells)
+            public Cell(double number)
             {
-                cells = _cells;
                 contents = number;
                 value = number;
             }
@@ -465,20 +473,18 @@ namespace SS
             /// Constructor for cell containing a string
             /// </summary>
             /// <param name="text">string text to be contained in cell</param>
-            public Cell(string text, Dictionary<string, Cell> _cells)
+            public Cell(string text)
             {
-                cells = _cells;
                 contents = text;
                 value = text;
 
             }
 
             // TODO: Make Evaluate work
-            public Cell(Formula formula, Dictionary<string, Cell> _cells)
+            public Cell(Formula formula)
             {
-                cells = _cells;
                 contents = formula;
-                value = formula.Evaluate(Lookup);
+                value = formula.Evaluate(LookupDel);
             }
         }
     }
