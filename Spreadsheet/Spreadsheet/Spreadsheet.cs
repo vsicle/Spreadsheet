@@ -166,13 +166,9 @@ namespace SS
         /// </summary>
         protected override IList<string> SetCellContents(string name, double number)
         {
-            // check name validity
-            if (!IsValidName(name))
-            {
-                throw new InvalidNameException();
-            }
+
             // if cell hasn't been used before assign it directly
-            else if (!cells.ContainsKey(name))
+            if (!cells.ContainsKey(name))
             {
                 cells.Add(name, new Cell(number));
             }
@@ -216,13 +212,9 @@ namespace SS
         /// </summary>
         protected override IList<string> SetCellContents(string name, string text)
         {
-            // check or valid name
-            if (!IsValidName(name))
-            {
-                throw new InvalidNameException();
-            }
+
             // if cell hasn't been used before, assign it directly
-            else if (!cells.ContainsKey(name))
+            if (!cells.ContainsKey(name))
             {
                 cells.Add(name, new Cell(text));
             }
@@ -270,13 +262,8 @@ namespace SS
         /// </summary>
         protected override IList<string> SetCellContents(string name, Formula formula)
         {
-            // check or valid name
-            if (!IsValidName(name))
-            {
-                throw new InvalidNameException();
-            }
             // if cell hasn't been used before, assign it directly
-            else if (!cells.ContainsKey(name))
+            if (!cells.ContainsKey(name))
             {
                 cells.Add(name, new Cell(formula));
             }
@@ -491,7 +478,7 @@ namespace SS
             {
                 cells = _cells;
                 contents = formula;
-                value = formula.Evaluate(Lookup, cells);
+                value = formula.Evaluate(Lookup);
             }
         }
     }
