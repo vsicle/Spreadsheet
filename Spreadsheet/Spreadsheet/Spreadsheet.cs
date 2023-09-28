@@ -97,11 +97,11 @@ namespace SS
             if (_normalize != null && _isValid != null)
             {
                 Normalize = _normalize;
-                IsValid = _isValid; 
+                IsValid = _isValid;
             }
             else
             {
-                
+
             }
             LookupDel = Lookup;
         }
@@ -368,18 +368,32 @@ namespace SS
 
         }
 
+        /// <summary>
+        /// Method to update the values of every cell when given a list of every cell that needs
+        /// to be updated, in the order of the list that it recieves
+        /// </summary>
+        /// <param name="namesOfCellsToChange"> list of string names of every cell that needs to be re-evaluated</param>
         private void UpdateValues(IList<string> namesOfCellsToChange)
         {
-            List<Cell> cellsToChange = new List<Cell>();
-
-            // convert every string name to the reference of that cell for all that need to be changed
-            foreach (string nameOfCell in namesOfCellsToChange)
+            foreach (string cellName in namesOfCellsToChange)
             {
-                cellsToChange.Add(cells[nameOfCell]);
+                // Get the contents of the cell
+                object cellContents = cells[cellName].contents;
+
+                // Check if the contents is a formula
+                if (cellContents is Formula formula)
+                {
+                    // Evaluate the formula and update its value
+                    object formulaValue = formula.Evaluate(LookupDel);
+                    cells[cellName].value = formulaValue;
+
+                }
+                else
+                {
+                    // The contents is either a string or a number, no need to evaluate
+                    cells[cellName].value = cellContents;
+                }
             }
-
-            //TODO: Update values of every cell, in the order in which they are in the list
-
         }
 
         /// <summary>
