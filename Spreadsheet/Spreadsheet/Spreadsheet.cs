@@ -256,7 +256,6 @@ namespace SS
         }
 
 
-        // IS THIS CLASS NEEDED SINCE CELL TAKES CARE OF FORMULA CREATION
         /// <summary>
         /// If name is invalid, throws an InvalidNameException.
         /// 
@@ -277,7 +276,10 @@ namespace SS
             {
                 cells.Add(name, new Cell(formula));
             }
-
+            else
+            {
+                cells[name].contents = formula;
+            }
             // get every variable in the formula, add dependencies such that 
             // "We" (name) depend on those variables, since they are in a formula, in "our" cell
             foreach (string variable in formula.GetVariables())
@@ -361,9 +363,13 @@ namespace SS
                 throw new InvalidNameException();
             }
             // return the value of the cell (should be double, text, or FormulaError)
-            else
+            else if(cells.ContainsKey(name))
             {
                 return cells[name].value;
+            }
+            else
+            {
+                return "";
             }
 
         }
@@ -428,6 +434,8 @@ namespace SS
         /// </summary>
         public override IList<string> SetContentsOfCell(string name, string content)
         {
+            IList<string> retVal = new List<string>();
+
             // Check if the cell name is valid
             if (!IsValidName(name))
             {
@@ -437,20 +445,33 @@ namespace SS
             // if number, use number constructor
             if (Double.TryParse(content, out double number))
             {
-                return SetCellContents(name, number);
+                // save output to update values, and still return the output
+                retVal = SetCellContents(name, number);
+                // Update values
+                UpdateValues(retVal);
+                return retVal;
+
             }
             // if formula use formula constructor
             else if (content.StartsWith("="))
             {
-
+                // create formula
                 Formula formula = new Formula(content.Substring(1), Normalize, IsValid);
-                return SetCellContents(name, formula);
+                // save output to update values, and still return the output
+                retVal = SetCellContents(name, formula);
+                // Update values
+                UpdateValues(retVal);
+                return retVal;
 
             }
             // if string, use string method
             else
             {
-                return SetCellContents(name, content);
+                // save return list
+                retVal = SetCellContents(name, content);
+                // update dependents, no actual updates are expected (looking for FormulaFormatExceptions using Lookup)
+                UpdateValues(retVal);
+                return retVal;
             }
         }
 
