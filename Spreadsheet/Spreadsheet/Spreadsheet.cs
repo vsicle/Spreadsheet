@@ -368,7 +368,7 @@ namespace SS
             {
                 return cells[name].value;
             }
-            
+
         }
 
         /// <summary>
@@ -403,10 +403,33 @@ namespace SS
         /// </summary>
         public override IList<string> SetContentsOfCell(string name, string content)
         {
-            throw new NotImplementedException();
+            // Check if the cell name is valid
+            if (!IsValidName(name))
+            {
+                throw new InvalidNameException();
+            }
+
+            // if number, use number constructor
+            if (Double.TryParse(content, out double number))
+            {
+                return SetCellContents(name, number);
+            }
+            // if formula use formula constructor
+            else if (content.StartsWith("="))
+            {
+
+                Formula formula = new Formula(content.Substring(1), Normalize, IsValid);
+                return SetCellContents(name, formula);
+
+            }
+            // if string, use string method
+            else
+            {
+                return SetCellContents(name, content);
+            }
         }
 
-        private double Lookup(string name)
+        private static double Lookup(string name, Dictionary<string, Cell> cells)
         {
             if (cells.ContainsKey(name))
             {
@@ -435,6 +458,7 @@ namespace SS
         /// </summary>
         internal class Cell
         {
+            private Dictionary<string, Cell> cells;
             public object contents { get; set; } // contents of the cell
             public object value { get; set; } // value of the cell (Evalution of formula, value of variable, string, double)
 
@@ -442,8 +466,9 @@ namespace SS
             /// Constructor for Cell containing a number
             /// </summary>
             /// <param name="number">double number to be contained in cell</param>
-            public Cell(double number)
+            public Cell(double number, Dictionary<string, Cell> _cells)
             {
+                cells = _cells;
                 contents = number;
                 value = number;
             }
@@ -453,21 +478,20 @@ namespace SS
             /// Constructor for cell containing a string
             /// </summary>
             /// <param name="text">string text to be contained in cell</param>
-            public Cell(string text)
+            public Cell(string text, Dictionary<string, Cell> _cells)
             {
-                // content starts with =, contents are a formula
-                if (text[0].Equals("="))
-                {
-                    // every formula is created with the Normalize and Validate Func provided by the user or the default
-                    contents = new Formula(text[1..], Normalize, IsValid);
+                cells = _cells;
+                contents = text;
+                value = text;
 
-                }
-                // content is not a formula
-                else
-                {
-                    contents = text;
-                    value = text;
-                }
+            }
+
+            // TODO: Make Evaluate work
+            public Cell(Formula formula, Dictionary<string, Cell> _cells)
+            {
+                cells = _cells;
+                contents = formula;
+                value = formula.Evaluate(Lookup, cells);
             }
         }
     }
