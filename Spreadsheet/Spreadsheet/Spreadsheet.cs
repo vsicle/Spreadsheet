@@ -368,6 +368,20 @@ namespace SS
 
         }
 
+        private void UpdateValues(IList<string> namesOfCellsToChange)
+        {
+            List<Cell> cellsToChange = new List<Cell>();
+
+            // convert every string name to the reference of that cell for all that need to be changed
+            foreach (string nameOfCell in namesOfCellsToChange)
+            {
+                cellsToChange.Add(cells[nameOfCell]);
+            }
+
+            //TODO: Update values of every cell, in the order in which they are in the list
+
+        }
+
         /// <summary>
         /// If name is invalid, throws an InvalidNameException.
         /// 
