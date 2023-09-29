@@ -63,7 +63,6 @@ namespace SS
         protected static Func<string, string> Normalize;
         protected static Func<string, bool> IsValid;
         protected static Func<string, double> LookupDel;
-
         /// <summary>
         /// Zero argument constructor for making a blank spreadsheet
         /// </summary>
@@ -347,13 +346,12 @@ namespace SS
         /// SpreadsheetReadWriteException with an explanatory message.
         /// </summary>
         /// 
-        
         public override void Save(string filename)
         {
             var spreadsheetData = new
             {
-                Version = Version,
-                Cells = new Dictionary<string, object>()
+                Cells = new Dictionary<string, object>(),
+                Version
             };
 
             // Populate the Cells dictionary with cell entries

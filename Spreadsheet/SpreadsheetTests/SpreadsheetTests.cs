@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using SpreadsheetUtilities;
 using SS;
+using System.Text.RegularExpressions;
 
 namespace SpreadsheetTest
 {
@@ -29,8 +30,9 @@ namespace SpreadsheetTest
 
             string jsonData = File.ReadAllText(testFileName);
 
+            // copy of the example serialization from xml comment
             string expectedJsonData = "{\r\n        \"Cells\": {\r\n            \"A1\": {\r\n              \"StringForm\": \"5\"\r\n            },\r\n            \"B3\": {\r\n              \"StringForm\": \"=A1+2\"\r\n            }\r\n          },\r\n          \"Version\": \"default\"\r\n        }";
-            Assert.AreEqual(expectedJsonData, jsonData);
+            Assert.AreEqual(Regex.Replace(expectedJsonData, @"\s+", ""), Regex.Replace(jsonData, @"\s+", ""));
 
 
         }

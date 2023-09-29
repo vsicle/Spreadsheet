@@ -420,7 +420,8 @@ public class Formula
     /// </summary>
     public override string ToString()
     {
-        return string.Join("", _formula);
+        string retVal = string.Join("", _formula);
+        return "="+retVal;
     }
 
     /// <summary>
