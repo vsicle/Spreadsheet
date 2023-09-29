@@ -62,9 +62,9 @@ namespace SS
         [JsonInclude]
         public Dictionary<string, Cell> Cells;
         private DependencyGraph dependencyGraph;
-        protected static Func<string, string> Normalize;
-        protected static Func<string, bool> IsValid;
-        protected static Func<string, double> LookupDel;
+        protected static Func<string, string>? Normalize;
+        protected static Func<string, bool>? IsValid;
+        protected static Func<string, double>? LookupDel;
         /// <summary>
         /// Zero argument constructor for making a blank spreadsheet
         /// </summary>
@@ -569,10 +569,10 @@ namespace SS
         /// </summary>
         public class Cell
         {
-            public string StringForm {  get; set; }
-            public object contents { get; set; } // contents of the cell
+            public string? StringForm {  get; set; }
+            public object? contents { get; set; } // contents of the cell
             [JsonIgnore]
-            public object value { get; set; } // value of the cell (Evalution of formula, value of variable, string, double)
+            public object? value { get; set; } // value of the cell (Evalution of formula, value of variable, string, double)
 
 
             /// <summary>
