@@ -1,6 +1,7 @@
 ﻿using SpreadsheetUtilities;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
@@ -11,7 +12,7 @@ namespace SS
 {
     /// <summary>
     /// An AbstractSpreadsheet object represents the state of a simple spreadsheet.  A 
-    /// spreadsheet consists of an infinite number of named cells.
+    /// spreadsheet consists of an infinite number of named Cells.
     /// 
     /// A string is a valid cell name if and only if:
     ///   (1) its first character is an underscore or a letter
@@ -23,7 +24,7 @@ namespace SS
     /// different cell names.
     /// 
     /// A spreadsheet contains a cell corresponding to every possible cell name.  (This
-    /// means that a spreadsheet contains an infinite number of cells.)  In addition to 
+    /// means that a spreadsheet contains an infinite number of Cells.)  In addition to 
     /// a name, each cell has a contents and a value.  The distinction is important.
     /// 
     /// The contents of a cell can be (1) a string, (2) a double, or (3) a Formula.  If the
@@ -58,7 +59,8 @@ namespace SS
     /// </summary>
     public class Spreadsheet : AbstractSpreadsheet
     {
-        private Dictionary<string, Cell> cells;
+        [JsonInclude]
+        public Dictionary<string, Cell> Cells;
         private DependencyGraph dependencyGraph;
         protected static Func<string, string> Normalize;
         protected static Func<string, bool> IsValid;
@@ -66,15 +68,25 @@ namespace SS
         /// <summary>
         /// Zero argument constructor for making a blank spreadsheet
         /// </summary>
+        [JsonConstructor]
         public Spreadsheet() : base("default")
         {
-            cells = new Dictionary<string, Cell>();
+            Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
             // default normalizer and IsValid function
             Normalize = s => s;
             IsValid = s => true;
             LookupDel = Lookup;
         }
+
+        //public Spreadsheet(Dictionary<string, Cell> Cells, string Version) : this(s =>s, s =>true, Version) 
+        //{
+        //    this.Cells = new Dictionary<string, Cell>();
+        //    dependencyGraph = new DependencyGraph();
+        //    //Normalize = s => s;
+        //    //IsValid = s => true;
+        //    LookupDel = Lookup;
+        //}
 
         /// <summary>
         /// 3 argument constructor that takes a normalizer, validator, and versionIdentifier
@@ -84,7 +96,7 @@ namespace SS
         /// <param name="versionNum"></param>
         public Spreadsheet(Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
         {
-            cells = new Dictionary<string, Cell>();
+            Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
             Normalize = _normalize;
             IsValid = _isValid;
@@ -93,18 +105,12 @@ namespace SS
 
         public Spreadsheet(string filePath, Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
         {
-            cells = new Dictionary<string, Cell>();
+            Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
-            if (_normalize != null && _isValid != null)
-            {
-                Normalize = _normalize;
-                IsValid = _isValid;
-            }
-            else
-            {
-
-            }
+            Normalize = _normalize;
+            IsValid = _isValid;
             LookupDel = Lookup;
+            Load(filePath);
         }
 
         /// <summary>
@@ -116,9 +122,9 @@ namespace SS
         public override object GetCellContents(string name)
         {
             // if name is valid and its cell is assigned, return its contents
-            if (IsValidName(name) && cells.ContainsKey(name))
+            if (IsValidName(name) && Cells.ContainsKey(name))
             {
-                return cells[name].contents;
+                return Cells[name].contents;
             }
             // if its a valid name, but hasn't been assigned return blank string
             else if (IsValidName(name))
@@ -143,7 +149,7 @@ namespace SS
         }
 
         /// <summary>
-        /// Enumerates the names of all the non-empty cells in the spreadsheet.
+        /// Enumerates the names of all the non-empty Cells in the spreadsheet.
         /// </summary>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
@@ -152,10 +158,10 @@ namespace SS
 
             // for every cell that has been "added/modified from base state"
             // if not null or empty add it
-            foreach (string cellName in cells.Keys)
+            foreach (string cellName in Cells.Keys)
             {
                 // if a cell is not null or empty then add its name to the return list
-                if (!string.IsNullOrEmpty(cells[cellName].contents.ToString()))
+                if (!string.IsNullOrEmpty(Cells[cellName].contents.ToString()))
                 {
                     nonEmptyCellNames.Add(cellName);
                 }
@@ -169,7 +175,7 @@ namespace SS
         /// If name is invalid, throws an InvalidNameException.
         /// 
         /// Otherwise, the contents of the named cell becomes number.  The method returns a
-        /// list consisting of name plus the names of all other cells whose value depends, 
+        /// list consisting of name plus the names of all other Cells whose value depends, 
         /// directly or indirectly, on the named cell.
         /// 
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -179,18 +185,18 @@ namespace SS
         {
 
             // if cell hasn't been used before assign it directly
-            if (!cells.ContainsKey(name))
+            if (!Cells.ContainsKey(name))
             {
-                cells.Add(name, new Cell(number));
+                Cells.Add(name, new Cell(number));
             }
             else
             // check what was in there before to update dependencies
             {
                 // if prev content was a formula remove name from their dependencies
-                if (cells[name].contents is Formula)
+                if (Cells[name].contents is Formula)
                 {
                     // make temp holder for Fomula to get its variables
-                    Formula tempFormula = (Formula)cells[name].contents;
+                    Formula tempFormula = (Formula)Cells[name].contents;
 
                     // this cell no longer depends on the variables of the formula that was in it
                     foreach (string variable in tempFormula.GetVariables())
@@ -201,10 +207,10 @@ namespace SS
                 }
 
                 // change the contents of the cell after doing check for it being a formula
-                cells[name].contents = number;
+                Cells[name].contents = number;
 
             }
-            // Use pre-built method to find all cells dependent on "name", save as list, and return
+            // Use pre-built method to find all Cells dependent on "name", save as list, and return
             List<string> dependentCells = GetCellsToRecalculate(name).ToList();
             return dependentCells;
 
@@ -215,7 +221,7 @@ namespace SS
         /// If name is invalid, throws an InvalidNameException.
         /// 
         /// Otherwise, the contents of the named cell becomes text.  The method returns a
-        /// list consisting of name plus the names of all other cells whose value depends, 
+        /// list consisting of name plus the names of all other Cells whose value depends, 
         /// directly or indirectly, on the named cell.
         /// 
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -225,18 +231,18 @@ namespace SS
         {
 
             // if cell hasn't been used before, assign it directly
-            if (!cells.ContainsKey(name))
+            if (!Cells.ContainsKey(name))
             {
-                cells.Add(name, new Cell(text));
+                Cells.Add(name, new Cell(text));
             }
             else
             // if cell has been used before, update accordingly and update dependencies if needed
             {
                 // if prev content was a formula remove name from their dependencies
-                if (cells[name].contents is Formula)
+                if (Cells[name].contents is Formula)
                 {
                     // make temp holder for Fomula to get its variables
-                    Formula tempFormula = (Formula)cells[name].contents;
+                    Formula tempFormula = (Formula)Cells[name].contents;
 
                     // this cell no longer depends on the variables of the formula that was in it
                     foreach (string variable in tempFormula.GetVariables())
@@ -247,10 +253,10 @@ namespace SS
                 }
 
                 // change the contents of the cell after doing check for it being a formula
-                cells[name].contents = text;
+                Cells[name].contents = text;
 
             }
-            // Use pre-built method to find all cells dependent on "name", save as list, and return
+            // Use pre-built method to find all Cells dependent on "name", save as list, and return
             List<string> dependentCells = GetCellsToRecalculate(name).ToList();
             return dependentCells;
 
@@ -264,7 +270,7 @@ namespace SS
         /// circular dependency, throws a CircularException, and no change is made to the spreadsheet.
         /// 
         /// Otherwise, the contents of the named cell becomes formula.  The method returns a
-        /// list consisting of name plus the names of all other cells whose value depends,
+        /// list consisting of name plus the names of all other Cells whose value depends,
         /// directly or indirectly, on the named cell.
         /// 
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -273,13 +279,13 @@ namespace SS
         protected override IList<string> SetCellContents(string name, Formula formula)
         {
             // if cell hasn't been used before, assign it directly
-            if (!cells.ContainsKey(name))
+            if (!Cells.ContainsKey(name))
             {
-                cells.Add(name, new Cell(formula));
+                Cells.Add(name, new Cell(formula));
             }
             else
             {
-                cells[name].contents = formula;
+                Cells[name].contents = formula;
             }
             // get every variable in the formula, add dependencies such that 
             // "We" (name) depend on those variables, since they are in a formula, in "our" cell
@@ -287,16 +293,16 @@ namespace SS
             {
                 dependencyGraph.AddDependency(variable, name);
             }
-            // Use pre-built method to find all cells dependent on "name", save as list, and return
+            // Use pre-built method to find all Cells dependent on "name", save as list, and return
             List<string> dependentCells = GetCellsToRecalculate(name).ToList();
             return dependentCells;
 
         }
 
         /// <summary>
-        /// Returns an enumeration, without duplicates, of the names of all cells whose
+        /// Returns an enumeration, without duplicates, of the names of all Cells whose
         /// values depend directly on the value of the named cell.  In other words, returns
-        /// an enumeration, without duplicates, of the names of all cells that contain
+        /// an enumeration, without duplicates, of the names of all Cells that contain
         /// formulas containing name.
         /// 
         /// For example, suppose that
@@ -348,6 +354,8 @@ namespace SS
         /// 
         public override void Save(string filename)
         {
+            //File.WriteAllText(filename, "");
+
             var spreadsheetData = new
             {
                 Cells = new Dictionary<string, object>(),
@@ -355,23 +363,48 @@ namespace SS
             };
 
             // Populate the Cells dictionary with cell entries
-            foreach (var cell in cells)
+            foreach (var cell in Cells)
             {
                 // Create an entry for each cell with StringForm
                 spreadsheetData.Cells[cell.Key] = new { StringForm = cell.Value.contents.ToString() };
             }
-
             // Serialize the data to JSON with consistent formatting
             JsonSerializerOptions options = new JsonSerializerOptions
             {
                 WriteIndented = true,
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-
             string jsonData = JsonSerializer.Serialize(spreadsheetData, options);
-
             // Write the JSON data to the file using File.WriteAllText
-            File.WriteAllText(filename, jsonData);
+            try
+            {
+                File.WriteAllText(filename, jsonData);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Couldn't write to file");
+            }
+        }
+
+        private void Load(string filename)
+        {
+            string jsonData = File.ReadAllText(filename);
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                IncludeFields = true
+            };
+
+            // try , if null or version mismatch throw excpetion
+            Spreadsheet? rebuilt = JsonSerializer.Deserialize<Spreadsheet>(jsonData);
+
+
+            foreach (string cellName in rebuilt.Cells.Keys)
+            {
+                this.SetContentsOfCell(cellName, rebuilt.Cells[cellName].StringForm);
+            }
         }
 
         /// <summary>
@@ -388,9 +421,9 @@ namespace SS
                 throw new InvalidNameException();
             }
             // return the value of the cell (should be double, text, or FormulaError)
-            else if (cells.ContainsKey(name))
+            else if (Cells.ContainsKey(name))
             {
-                return cells[name].value;
+                return Cells[name].value;
             }
             else
             {
@@ -409,20 +442,20 @@ namespace SS
             foreach (string cellName in namesOfCellsToChange)
             {
                 // Get the contents of the cell
-                object cellContents = cells[cellName].contents;
+                object cellContents = Cells[cellName].contents;
 
                 // Check if the contents is a formula
                 if (cellContents is Formula formula)
                 {
                     // Evaluate the formula and update its value
                     object formulaValue = formula.Evaluate(LookupDel);
-                    cells[cellName].value = formulaValue;
+                    Cells[cellName].value = formulaValue;
 
                 }
                 else
                 {
                     // The contents is either a string or a number, no need to evaluate
-                    cells[cellName].value = cellContents;
+                    Cells[cellName].value = cellContents;
                 }
             }
         }
@@ -449,9 +482,9 @@ namespace SS
         /// Otherwise, the contents of the named cell becomes content.
         /// 
         /// If an exception is not thrown, the method returns a list consisting of
-        /// name plus the names of all other cells whose value depends, directly
+        /// name plus the names of all other Cells whose value depends, directly
         /// or indirectly, on the named cell. The order of the list should be any
-        /// order such that if cells are re-evaluated in that order, their dependencies 
+        /// order such that if Cells are re-evaluated in that order, their dependencies 
         /// are satisfied by the time they are evaluated.
         /// 
         /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -502,12 +535,19 @@ namespace SS
 
         private double Lookup(string name)
         {
-            if (cells.ContainsKey(name))
+            if (Cells.ContainsKey(name))
             {
+
                 // if value is a number, return it, otherwise there is an issue
-                if (cells[name].value is double)
+                if (Cells[name].value is double)
                 {
-                    return (double)cells[name].value;
+                    return (double)Cells[name].value;
+                }
+                // if stringform is a double, set value to double
+                else if (double.TryParse(Cells[name].StringForm, out double num))
+                {
+                    Cells[name].value = num;
+                    return (double)Cells[name].value;
                 }
                 else
                 {
@@ -527,10 +567,13 @@ namespace SS
         /// Cell class for private use only, representation of a single cell in excel 
         /// Contents should be a string, double, or Formula object
         /// </summary>
-        internal class Cell
+        public class Cell
         {
+            public string StringForm {  get; set; }
             public object contents { get; set; } // contents of the cell
+            [JsonIgnore]
             public object value { get; set; } // value of the cell (Evalution of formula, value of variable, string, double)
+
 
             /// <summary>
             /// Constructor for Cell containing a number
@@ -542,15 +585,21 @@ namespace SS
                 value = number;
             }
 
+            [JsonConstructor]
+            public Cell()
+            {
+
+            }
+
             // TODO: Change/Update comment
             /// <summary>
             /// Constructor for cell containing a string
             /// </summary>
             /// <param name="text">string text to be contained in cell</param>
-            public Cell(string text)
+            public Cell(string StringForm)
             {
-                contents = text;
-                value = text;
+                contents = StringForm;
+                value = StringForm;
 
             }
 

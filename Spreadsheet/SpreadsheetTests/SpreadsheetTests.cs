@@ -37,6 +37,27 @@ namespace SpreadsheetTest
 
         }
 
+        [TestMethod]
+        public void TestLoadMethod()
+        {
+
+            Spreadsheet sp = new Spreadsheet();
+            sp.SetContentsOfCell("A1", "5.0");
+            sp.SetContentsOfCell("B3", "= A1 +2");
+
+            string testFileName = "save1.txt";
+
+            sp.Save(testFileName);
+
+            Assert.IsTrue(File.Exists(testFileName));
+
+            string jsonData = File.ReadAllText(testFileName);
+
+            Spreadsheet rebuilt = new Spreadsheet(testFileName, n=>n, n => true, "default");
+            Assert.AreEqual(5.0, rebuilt.GetCellValue("A1"));
+            Assert.AreEqual(7.0, rebuilt.GetCellValue("B3"));
+
+        }
 
         [TestMethod]
         public void AreValuesUpdatingCorrectly()
@@ -189,7 +210,7 @@ namespace SpreadsheetTest
         [TestMethod]
         public void GetNamesofNonEmptyCells()
         {
-            // make non-empty cells
+            // make non-empty Cells
             Spreadsheet sp = new Spreadsheet();
             sp.SetContentsOfCell("A1", "3");
             sp.SetContentsOfCell("A2", "=A1+A1");

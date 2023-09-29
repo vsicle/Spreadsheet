@@ -41,7 +41,7 @@ public class SpreadsheetReadWriteException : Exception
 // Modified for PS5.
 /// <summary>
 /// An AbstractSpreadsheet object represents the state of a simple spreadsheet.  A 
-/// spreadsheet consists of an infinite number of named cells.
+/// spreadsheet consists of an infinite number of named Cells.
 /// 
 /// A string is a cell name if and only if it consists of a letter or underscore followed by
 /// zero or more letters, underscores, or digits, AND it satisfies the predicate IsValid.
@@ -158,7 +158,7 @@ public abstract class AbstractSpreadsheet
     public abstract object GetCellValue(string name);
 
     /// <summary>
-    /// Enumerates the names of all the non-empty cells in the spreadsheet.
+    /// Enumerates the names of all the non-empty Cells in the spreadsheet.
     /// </summary>
     public abstract IEnumerable<string> GetNamesOfAllNonemptyCells();
 
@@ -193,9 +193,9 @@ public abstract class AbstractSpreadsheet
     /// Otherwise, the contents of the named cell becomes content.
     /// 
     /// If an exception is not thrown, the method returns a list consisting of
-    /// name plus the names of all other cells whose value depends, directly
+    /// name plus the names of all other Cells whose value depends, directly
     /// or indirectly, on the named cell. The order of the list should be any
-    /// order such that if cells are re-evaluated in that order, their dependencies 
+    /// order such that if Cells are re-evaluated in that order, their dependencies 
     /// are satisfied by the time they are evaluated.
     /// 
     /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -206,9 +206,9 @@ public abstract class AbstractSpreadsheet
     // MODIFIED PROTECTION FOR PS5
     /// <summary>
     /// The contents of the named cell becomes number.  The method returns a
-    /// list consisting of name plus the names of all other cells whose value depends, 
+    /// list consisting of name plus the names of all other Cells whose value depends, 
     /// directly or indirectly, on the named cell. The order of the list should be any
-    /// order such that if cells are re-evaluated in that order, their dependencies 
+    /// order such that if Cells are re-evaluated in that order, their dependencies 
     /// are satisfied by the time they are evaluated.
     /// 
     /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -219,9 +219,9 @@ public abstract class AbstractSpreadsheet
     // MODIFIED PROTECTION FOR PS5
     /// <summary>
     /// The contents of the named cell becomes text.  The method returns a
-    /// list consisting of name plus the names of all other cells whose value depends, 
+    /// list consisting of name plus the names of all other Cells whose value depends, 
     /// directly or indirectly, on the named cell. The order of the list should be any
-    /// order such that if cells are re-evaluated in that order, their dependencies 
+    /// order such that if Cells are re-evaluated in that order, their dependencies 
     /// are satisfied by the time they are evaluated.
     /// 
     /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -235,9 +235,9 @@ public abstract class AbstractSpreadsheet
     /// circular dependency, throws a CircularException, and no change is made to the spreadsheet.
     /// 
     /// Otherwise, the contents of the named cell becomes formula. The method returns a
-    /// list consisting of name plus the names of all other cells whose value depends,
+    /// list consisting of name plus the names of all other Cells whose value depends,
     /// directly or indirectly, on the named cell. The order of the list should be any
-    /// order such that if cells are re-evaluated in that order, their dependencies 
+    /// order such that if Cells are re-evaluated in that order, their dependencies 
     /// are satisfied by the time they are evaluated.
     /// 
     /// For example, if name is A1, B1 contains A1*2, and C1 contains B1+A1, the
@@ -247,9 +247,9 @@ public abstract class AbstractSpreadsheet
 
 
     /// <summary>
-    /// Returns an enumeration, without duplicates, of the names of all cells whose
+    /// Returns an enumeration, without duplicates, of the names of all Cells whose
     /// values depend directly on the value of the named cell.  In other words, returns
-    /// an enumeration, without duplicates, of the names of all cells that contain
+    /// an enumeration, without duplicates, of the names of all Cells that contain
     /// formulas containing name.
     /// 
     /// For example, suppose that
@@ -270,7 +270,7 @@ public abstract class AbstractSpreadsheet
     /// If the cell referred to by name is involved in a circular dependency,
     /// throws a CircularException.
     /// 
-    /// Otherwise, returns an enumeration of the names of all cells whose values must
+    /// Otherwise, returns an enumeration of the names of all Cells whose values must
     /// be recalculated, assuming that the contents of the cell referred to by name has changed.
     /// The cell names are enumerated in an order in which the calculations should be done.  
     /// 
