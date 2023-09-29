@@ -1,3 +1,5 @@
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using SpreadsheetUtilities;
 using SS;
 
@@ -9,6 +11,30 @@ namespace SpreadsheetTest
     [TestClass]
     public class SpreadsheetTest
     {
+
+        [TestMethod]
+        public void TestSaveMethod()
+        {
+
+            Spreadsheet sp = new Spreadsheet();
+            sp.SetContentsOfCell("A1", "5.0");
+            sp.SetContentsOfCell("B3", "= A1 +2");
+
+
+            string testFileName = "save.txt";
+
+            sp.Save(testFileName);
+
+            Assert.IsTrue(File.Exists(testFileName));
+
+            string jsonData = File.ReadAllText(testFileName);
+
+            string expectedJsonData = "{\r\n        \"Cells\": {\r\n            \"A1\": {\r\n              \"StringForm\": \"5\"\r\n            },\r\n            \"B3\": {\r\n              \"StringForm\": \"=A1+2\"\r\n            }\r\n          },\r\n          \"Version\": \"default\"\r\n        }";
+            Assert.AreEqual(expectedJsonData, jsonData);
+
+
+        }
+
 
         [TestMethod]
         public void AreValuesUpdatingCorrectly()
@@ -34,7 +60,7 @@ namespace SpreadsheetTest
             Assert.AreEqual(0.0, sp1.GetCellValue("A2"));
         }
 
-            [TestMethod]
+        [TestMethod]
         public void FormulaLeadingToBlankOrStringCell()
         {
             Spreadsheet sp = new Spreadsheet();
@@ -83,7 +109,7 @@ namespace SpreadsheetTest
         [TestMethod]
         public void GetCellContents()
         {
-            // make spreadsheet and add contents
+            // make sp and add contents
             Spreadsheet sp = new Spreadsheet();
             sp.SetContentsOfCell("A1", "3");
             sp.SetContentsOfCell("A2", "=A1+A1");
@@ -158,7 +184,7 @@ namespace SpreadsheetTest
         }
 
 
-            [TestMethod]
+        [TestMethod]
         public void GetNamesofNonEmptyCells()
         {
             // make non-empty cells
@@ -186,7 +212,7 @@ namespace SpreadsheetTest
         [TestMethod]
         public void FindAllDependents()
         {
-            // make spreadsheet with no dependencies
+            // make sp with no dependencies
             Spreadsheet sp = new Spreadsheet();
 
             // set a cell, it should return itself

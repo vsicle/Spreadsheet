@@ -1,5 +1,8 @@
 ﻿using SpreadsheetUtilities;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -87,7 +90,6 @@ namespace SS
             Normalize = _normalize;
             IsValid = _isValid;
             LookupDel = Lookup;
-
         }
 
         public Spreadsheet(string filePath, Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
@@ -344,9 +346,34 @@ namespace SS
         /// If there are any problems opening, writing, or closing the file, the method should throw a
         /// SpreadsheetReadWriteException with an explanatory message.
         /// </summary>
+        /// 
+        
         public override void Save(string filename)
         {
-            throw new NotImplementedException();
+            var spreadsheetData = new
+            {
+                Version = Version,
+                Cells = new Dictionary<string, object>()
+            };
+
+            // Populate the Cells dictionary with cell entries
+            foreach (var cell in cells)
+            {
+                // Create an entry for each cell with StringForm
+                spreadsheetData.Cells[cell.Key] = new { StringForm = cell.Value.contents.ToString() };
+            }
+
+            // Serialize the data to JSON with consistent formatting
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+
+            string jsonData = JsonSerializer.Serialize(spreadsheetData, options);
+
+            // Write the JSON data to the file using File.WriteAllText
+            File.WriteAllText(filename, jsonData);
         }
 
         /// <summary>
@@ -363,7 +390,7 @@ namespace SS
                 throw new InvalidNameException();
             }
             // return the value of the cell (should be double, text, or FormulaError)
-            else if(cells.ContainsKey(name))
+            else if (cells.ContainsKey(name))
             {
                 return cells[name].value;
             }
@@ -529,7 +556,6 @@ namespace SS
 
             }
 
-            // TODO: Make Evaluate work
             public Cell(Formula formula)
             {
                 contents = formula;
