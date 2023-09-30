@@ -3,10 +3,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Xml;
-using System.Xml.Linq;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SS
 {
@@ -14,29 +10,29 @@ namespace SS
     /// An AbstractSpreadsheet object represents the state of a simple spreadsheet.  A 
     /// spreadsheet consists of an infinite number of named Cells.
     /// 
-    /// A string is a valid cell name if and only if:
-    ///   (1) its first character is an underscore or a letter
-    ///   (2) its remaining characters (if any) are underscores and/or letters and/or digits
-    /// Note that this is the same as the definition of valid variable from the PS3 Formula class.
+    /// A string is a cell name if and only if it consists of a letter or underscore followed by
+    /// zero or more letters, underscores, or digits, AND it satisfies the predicate IsValid.
+    /// For example, "_", "A1", and "BC89" are cell names so long as they satisfy IsValid.
+    /// On the other hand, "0A1", "1+1", and "" are not cell names, regardless of IsValid.
     /// 
-    /// For example, "x", "_", "x2", "y_15", and "___" are all valid cell  names, but
-    /// "25", "2x", and "&" are not.  Cell names are case sensitive, so "x" and "X" are
-    /// different cell names.
+    /// Any valid incoming cell name, whether passed as a parameter or embedded in a formula,
+    /// must be normalized with the Normalize method before it is used by or saved in 
+    /// this spreadsheet.  For example, if Normalize is s => s.ToUpper(), then
+    /// the Formula "x3+a5" should be converted to "X3+A5" before use.
     /// 
-    /// A spreadsheet contains a cell corresponding to every possible cell name.  (This
-    /// means that a spreadsheet contains an infinite number of Cells.)  In addition to 
-    /// a name, each cell has a contents and a value.  The distinction is important.
+    /// A spreadsheet contains a cell corresponding to every possible cell name.  
+    /// In addition to a name, each cell has a contents and a value.  The distinction is
+    /// important.
     /// 
     /// The contents of a cell can be (1) a string, (2) a double, or (3) a Formula.  If the
     /// contents is an empty string, we say that the cell is empty.  (By analogy, the contents
-    /// of a cell in Excel is what is displayed on the editing line when the cell is selected).
+    /// of a cell in Excel is what is displayed on the editing line when the cell is selected.)
     /// 
     /// In a new spreadsheet, the contents of every cell is the empty string.
     ///  
-    /// We are not concerned with values in PS4, but to give context for the future of the project,
-    /// the value of a cell can be (1) a string, (2) a double, or (3) a FormulaError.  
+    /// The value of a cell can be (1) a string, (2) a double, or (3) a FormulaError.  
     /// (By analogy, the value of an Excel cell is what is displayed in that cell's position
-    /// in the grid). 
+    /// in the grid.)
     /// 
     /// If a cell's contents is a string, its value is that string.
     /// 
@@ -55,7 +51,7 @@ namespace SS
     /// dependency.
     /// 
     /// Modified and implemented by Vasil Vassilev
-    /// Latest Change made on 9/22/2023
+    /// Latest Change made on 9/29/2023
     /// </summary>
     public class Spreadsheet : AbstractSpreadsheet
     {
@@ -65,6 +61,7 @@ namespace SS
         private Func<string, string> Normalize;
         private Func<string, bool> IsValid;
         private Func<string, double> LookupDel;
+
         /// <summary>
         /// Zero argument constructor for making a blank spreadsheet
         /// </summary>
@@ -73,20 +70,12 @@ namespace SS
         {
             Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
+            Changed = false;
             // default normalizer and IsValid function
             Normalize = s => s;
             IsValid = s => true;
             LookupDel = Lookup;
         }
-
-        //public Spreadsheet(Dictionary<string, Cell> Cells, string Version) : this(s =>s, s =>true, Version) 
-        //{
-        //    this.Cells = new Dictionary<string, Cell>();
-        //    dependencyGraph = new DependencyGraph();
-        //    //Normalize = s => s;
-        //    //IsValid = s => true;
-        //    LookupDel = Lookup;
-        //}
 
         /// <summary>
         /// 3 argument constructor that takes a normalizer, validator, and versionIdentifier
@@ -98,6 +87,7 @@ namespace SS
         {
             Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
+            Changed = false;
             Normalize = _normalize;
             IsValid = _isValid;
             LookupDel = Lookup;
@@ -107,6 +97,7 @@ namespace SS
         {
             Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
+            Changed = false;
             Normalize = _normalize;
             IsValid = _isValid;
             LookupDel = Lookup;
@@ -354,42 +345,52 @@ namespace SS
         /// 
         public override void Save(string filename)
         {
-            //File.WriteAllText(filename, "");
+            // update flag
+            Changed = false;
 
+            // manual Serializing of spreadsheet, couldn't get regular JSON serialization to work
             var spreadsheetData = new
             {
                 Cells = new Dictionary<string, object>(),
                 Version
             };
 
-            // Populate the Cells dictionary with cell entries
             foreach (var cell in Cells)
             {
                 // Create an entry for each cell with StringForm
                 spreadsheetData.Cells[cell.Key] = new { StringForm = cell.Value.contents.ToString() };
             }
-            // Serialize the data to JSON with consistent formatting
+            // Serialize the data to JSON
             JsonSerializerOptions options = new JsonSerializerOptions
             {
                 WriteIndented = true,
+                // don't encode signs like "+" to unicode, leave them as they are
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
             string jsonData = JsonSerializer.Serialize(spreadsheetData, options);
-            // Write the JSON data to the file using File.WriteAllText
+            // try to write the JSON data to the file using File.WriteAllText
             try
             {
                 File.WriteAllText(filename, jsonData);
             }
             catch (Exception)
             {
-                Console.WriteLine("Couldn't write to file");
+                throw new SpreadsheetReadWriteException("Could not write to filename");
             }
         }
 
+
+        /// <summary>
+        /// Helper method for reconstructing a spreadsheet given a JSON representation in a text file
+        /// </summary>
+        /// <param name="filename">string of filename or filepath where the source .txt file is</param>
+        /// <exception cref="SpreadsheetReadWriteException">Thrown if there is an issue reading or writing to a file</exception>
         private void Load(string filename)
         {
+            // read in JSON data
             string jsonData = File.ReadAllText(filename);
 
+            // set up options for reading
             JsonSerializerOptions options = new JsonSerializerOptions
             {
                 WriteIndented = true,
@@ -400,18 +401,19 @@ namespace SS
             // try , if null or version mismatch throw excpetion
             Spreadsheet? rebuilt = JsonSerializer.Deserialize<Spreadsheet>(jsonData);
 
+            // check if versions match and if rebuilt is null
             if (rebuilt == null || rebuilt.Version != Version)
             {
                 throw new SpreadsheetReadWriteException("Rebuilt spreadsheet is null or wrong version");
             }
 
+            // for every cell in rebuilt, use the StringForm and the name to SetContentsOfCell in "this" spreadsheet
+            // this preserves all dependencies, contents, and values
             foreach (string cellName in rebuilt.Cells.Keys)
             {
                 var contentOfCell = rebuilt.Cells[cellName].StringForm;
-                if(contentOfCell != null)
+                if (contentOfCell != null)
                     this.SetContentsOfCell(cellName, contentOfCell);
-                else
-                    throw new SpreadsheetReadWriteException("Rebuilt spreadsheet cell has null StringForm");
             }
         }
 
@@ -500,7 +502,14 @@ namespace SS
         /// </summary>
         public override IList<string> SetContentsOfCell(string name, string content)
         {
+            // update flag
+            Changed = true;
+
             IList<string> retVal = new List<string>();
+
+            //Apply normalizer and validator
+            name = Normalize(name);
+
 
             // Check if the cell name is valid
             if (!IsValidName(name))
@@ -541,20 +550,19 @@ namespace SS
             }
         }
 
+        /// <summary>
+        /// Method to lookup variables inside the spreadsheet
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns>double, the value of the variable</returns>
+        /// <exception cref="FormulaFormatException">thrown if variable leads to string, or empty cell</exception>
         private double Lookup(string name)
         {
             if (Cells.ContainsKey(name))
             {
-
                 // if value is a number, return it, otherwise there is an issue
                 if (Cells[name].value is double)
                 {
-                    return (double)Cells[name].value;
-                }
-                // if stringform is a double, set value to double
-                else if (double.TryParse(Cells[name].StringForm, out double num))
-                {
-                    Cells[name].value = num;
                     return (double)Cells[name].value;
                 }
                 else
@@ -572,11 +580,12 @@ namespace SS
 
 
         /// <summary>
-        /// Cell class for private use only, representation of a single cell in excel 
+        /// Cell class, representation of a single cell in excel 
         /// Contents should be a string, double, or Formula object
         /// </summary>
         public class Cell
         {
+            // StringForm used for Reconstruction
             public string? StringForm { get; set; }
             public object contents { get; set; } // contents of the cell
             [JsonIgnore]
@@ -589,11 +598,13 @@ namespace SS
             /// <param name="number">double number to be contained in cell</param>
             public Cell(double number)
             {
-
                 contents = number;
                 value = number;
             }
 
+            /// <summary>
+            /// Blank constructor used to deserialize JSON
+            /// </summary>
             [JsonConstructor]
             public Cell()
             {
@@ -601,7 +612,6 @@ namespace SS
                 value = "";
             }
 
-            // TODO: Change/Update comment
             /// <summary>
             /// Constructor for cell containing a string
             /// </summary>
@@ -613,6 +623,10 @@ namespace SS
 
             }
 
+            /// <summary>
+            /// Constructor used for creating a cell with a formula in it
+            /// </summary>
+            /// <param name="formula">Formula to be put in cell</param>
             public Cell(Formula formula)
             {
                 contents = formula;

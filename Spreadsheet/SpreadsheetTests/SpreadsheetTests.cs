@@ -1,5 +1,3 @@
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 using SpreadsheetUtilities;
 using SS;
 using System.Text.RegularExpressions;
@@ -16,14 +14,14 @@ namespace SpreadsheetTest
         [TestMethod]
         public void TestSaveMethod()
         {
-
+            // using example from xml comment
             Spreadsheet sp = new Spreadsheet();
             sp.SetContentsOfCell("A1", "5.0");
             sp.SetContentsOfCell("B3", "= A1 +2");
 
-
             string testFileName = "save.txt";
 
+            // save it
             sp.Save(testFileName);
 
             Assert.IsTrue(File.Exists(testFileName));
@@ -32,6 +30,8 @@ namespace SpreadsheetTest
 
             // copy of the example serialization from xml comment
             string expectedJsonData = "{\r\n        \"Cells\": {\r\n            \"A1\": {\r\n              \"StringForm\": \"5\"\r\n            },\r\n            \"B3\": {\r\n              \"StringForm\": \"=A1+2\"\r\n            }\r\n          },\r\n          \"Version\": \"default\"\r\n        }";
+
+            // make sure example serialization is the same as my serialization
             Assert.AreEqual(Regex.Replace(expectedJsonData, @"\s+", ""), Regex.Replace(jsonData, @"\s+", ""));
 
 
@@ -40,16 +40,82 @@ namespace SpreadsheetTest
         [TestMethod]
         public void ConstructingFormulas()
         {
-            Spreadsheet sp = new Spreadsheet();
+            // create basic spreadsheet and save it
             AbstractSpreadsheet sheet1 = new Spreadsheet();
+            sheet1.SetContentsOfCell("b1", "2");
+            string saveFile = "testsave.txt";
+            sheet1.Save(saveFile);
 
-            AbstractSpreadsheet sheet2 = new Spreadsheet(ValidityDelegate, NormalizeDelegate, VersionString);
-            AbstractSpreadsheet sheet3 = new Spreadsheet(PathToFile, ValidityDelegate, NormalizeDelegate, VersionString);
+            // make spreadsheet using second constructor (custom Normalize and IsValid)
+            AbstractSpreadsheet sheet2 = new Spreadsheet(n => true, n => n.ToUpper(), "1.1");
+            sheet2.SetContentsOfCell("a1", "5");
+            Assert.AreEqual(5.0, sheet2.GetCellValue("A1"));
 
+            // Make sheet3 based off save file of sheet1
+            AbstractSpreadsheet sheet3 = new Spreadsheet(saveFile, n => true, n => n.ToUpper(), "default");
+            Assert.AreEqual(2.0, sheet3.GetCellValue("B1"));
 
+            // try to save sheet1 to a invalid path
+            string invalidFilePath = "";
+            try
+            {
+                sheet3.Save(invalidFilePath);
+                Assert.Fail();
+            }
+            catch (SpreadsheetReadWriteException)
+            {
+                Assert.IsTrue(true);
+            }
         }
 
-            [TestMethod]
+        [TestMethod]
+        public void ReconstructingSpreadsheetsWithComplexFormulas()
+        {
+            Spreadsheet sp = new Spreadsheet();
+            sp.SetContentsOfCell("A1", "1");
+            sp.SetContentsOfCell("A2", "2");
+            sp.SetContentsOfCell("A3", "3");
+            sp.SetContentsOfCell("A4", "4");
+
+            sp.SetContentsOfCell("B1", "= A1 * 2");
+            sp.SetContentsOfCell("B2", "= B1 * A4");
+            sp.SetContentsOfCell("B3", "=B2+1");
+            sp.SetContentsOfCell("B4", "=A1+A2+A3+A4+B1+B2+B3");
+
+            Assert.AreEqual(2.0, sp.GetCellValue("B1"));
+            Assert.AreEqual(8.0, sp.GetCellValue("B2"));
+            Assert.AreEqual(9.0, sp.GetCellValue("B3"));
+            Assert.AreEqual(29.0, sp.GetCellValue("B4"));
+
+            sp.Save("save.txt");
+
+            Spreadsheet sp2 = new Spreadsheet("save.txt", n => true, n => n, "default");
+            Assert.AreEqual(2.0, sp.GetCellValue("B1"));
+            Assert.AreEqual(8.0, sp.GetCellValue("B2"));
+            Assert.AreEqual(9.0, sp.GetCellValue("B3"));
+            Assert.AreEqual(29.0, sp.GetCellValue("B4"));
+        }
+
+
+        [TestMethod]
+        public void ReconstructionExceptions()
+        {
+            Spreadsheet sp = new Spreadsheet();
+            sp.SetContentsOfCell("A1", "1");
+            sp.Save("save.txt");
+
+            try
+            {
+                Spreadsheet sheet2 = new Spreadsheet("save.txt", n => true, n => n.ToUpper(), "1.1");
+                Assert.Fail();
+            }
+            catch (SpreadsheetReadWriteException)
+            {
+                Assert.IsTrue(true);
+            }
+        }
+
+        [TestMethod]
         public void TestLoadMethod()
         {
 
@@ -65,7 +131,7 @@ namespace SpreadsheetTest
 
             string jsonData = File.ReadAllText(testFileName);
 
-            Spreadsheet rebuilt = new Spreadsheet(testFileName, n=>n, n => true, "default");
+            Spreadsheet rebuilt = new Spreadsheet(testFileName, n => true, n => n, "default");
             Assert.AreEqual(5.0, rebuilt.GetCellValue("A1"));
             Assert.AreEqual(7.0, rebuilt.GetCellValue("B3"));
 
@@ -154,7 +220,7 @@ namespace SpreadsheetTest
             Assert.AreEqual(new Formula("A1+A1"), sp.GetCellContents("A2")); // test with formula
             Assert.AreEqual(3, (double)sp.GetCellContents("A1"));   // test with double
             Assert.AreEqual("text", sp.GetCellContents("A3"));      // test with text
-            Assert.AreEqual("", sp.GetCellContents("A5"));      // test with empty cell
+            Assert.AreEqual("", sp.GetCellContents("A5"));          // test with empty cell
 
             // expect a exception to be thrown due to invalid name, if no exception is thrown test will fail
             try
