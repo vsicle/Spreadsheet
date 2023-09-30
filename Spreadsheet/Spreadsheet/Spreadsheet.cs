@@ -94,7 +94,7 @@ namespace SS
         /// <param name="_normalize">normalizer function, input: string, output:string</param>
         /// <param name="_isValid"></param>
         /// <param name="versionNum"></param>
-        public Spreadsheet(Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
+        public Spreadsheet(Func<string, bool> _isValid, Func<string, string> _normalize, string versionNum) : base(versionNum)
         {
             Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();
@@ -103,7 +103,7 @@ namespace SS
             LookupDel = Lookup;
         }
 
-        public Spreadsheet(string filePath, Func<string, string> _normalize, Func<string, bool> _isValid, string versionNum) : base(versionNum)
+        public Spreadsheet(string filePath, Func<string, bool> _isValid, Func<string, string> _normalize, string versionNum) : base(versionNum)
         {
             Cells = new Dictionary<string, Cell>();
             dependencyGraph = new DependencyGraph();

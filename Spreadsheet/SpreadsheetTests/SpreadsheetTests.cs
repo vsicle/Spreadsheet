@@ -38,12 +38,15 @@ namespace SpreadsheetTest
         }
 
         [TestMethod]
-        public void TestMessedUpFormula()
+        public void ConstructingFormulas()
         {
             Spreadsheet sp = new Spreadsheet();
+            AbstractSpreadsheet sheet1 = new Spreadsheet();
+
+            AbstractSpreadsheet sheet2 = new Spreadsheet(ValidityDelegate, NormalizeDelegate, VersionString);
+            AbstractSpreadsheet sheet3 = new Spreadsheet(PathToFile, ValidityDelegate, NormalizeDelegate, VersionString);
 
 
-          
         }
 
             [TestMethod]
