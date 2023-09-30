@@ -38,6 +38,15 @@ namespace SpreadsheetTest
         }
 
         [TestMethod]
+        public void TestMessedUpFormula()
+        {
+            Spreadsheet sp = new Spreadsheet();
+
+
+          
+        }
+
+            [TestMethod]
         public void TestLoadMethod()
         {
 
